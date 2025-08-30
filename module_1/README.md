@@ -1,0 +1,1 @@
+Acsany, Philipp. 2024. “Build a Scalable Flask Web Project From Scratch.” March 22, 2024. https://realpython.com/flask-project/.

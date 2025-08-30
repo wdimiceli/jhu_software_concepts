@@ -1,10 +1,8 @@
 from flask import Flask
+from blueprints.portfolio import bp as portfolio
 
 app = Flask(__name__)
-
-@app.route("/")
-def home():
-    return "Hello, World!"
+app.register_blueprint(portfolio)
 
 if __name__ == "__main__":
     app.run()
