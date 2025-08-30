@@ -107,6 +107,7 @@ section {
 p {
   max-width: 500px;
   font-size: 18px;
+  line-height: 1.25;
 
   &:not(:last-child) {
     margin-bottom: 12px;
@@ -180,6 +181,7 @@ nav-layout {
   max-width: 100%;
   border-radius: 20px;
   overflow: clip;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.2);
   
   & img {
     position: absolute;
