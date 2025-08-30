@@ -13,14 +13,14 @@ bp = Blueprint(
 
 @bp.route("/")
 def home():
-    return render_template("home.html")
+    return render_template("pages/home.html", page_id="home")
 
 
 @bp.route("/contact")
 def contact():
-    return render_template("contact.html")
+    return render_template("pages/contact.html")
 
 
 @bp.route("/projects")
 def projects():
-    return render_template("projects.html")
+    return render_template("pages/projects.html")
