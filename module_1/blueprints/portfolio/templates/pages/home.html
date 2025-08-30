@@ -20,6 +20,16 @@
     </p>
   </div>
 
-  <img src="https://placehold.co/600x400" />
+  <div class="bio-photo">
+    <img
+      src="{{ url_for('portfolio.static', filename='wdimiceli-jhu-bio-photo-comic.jpg') }}"
+      alt=""
+      aria-hidden
+    />
+    <img
+      src="{{ url_for('portfolio.static', filename='wdimiceli-jhu-bio-photo.jpg') }}"
+      alt="Photograph of Wes DiMiceli. He has a beard and glasses and is holding a small blue jay toy in their open palm. The toy displays the JHU logo.
+    />
+  </div>
 </section>
 {% endblock main %}
