@@ -134,6 +134,16 @@ main {
   }
 }
 
+a {
+  color: #f8f8f8;
+  text-decoration: none;
+
+  &[data-active] {
+    color: #d6444e;
+    font-weight: 600;
+  }
+}
+
 nav-layout {
   display: block;
 
@@ -161,16 +171,6 @@ nav-layout {
       position: absolute;
       border-top-left-radius: 10px;
     }
-    
-    & a {
-      color: #f8f8f8;
-      text-decoration: none;
-
-      &[data-active] {
-        color: #d6444e;
-        font-weight: 600;
-      }
-    }
   }
 }
 
@@ -195,5 +195,26 @@ nav-layout {
     &:hover {
       opacity: 0;
     }
+  }
+}
+
+.key-value {
+  display: grid;
+  /* grid: auto / auto; */
+  grid: auto / min-content auto;
+  gap: 16px;
+  align-items: center;
+  
+  & > * {
+    font-size: 18px;
+    
+    @media (min-width: 960px) {
+      font-size: 24px;
+    }
+  }
+
+  & > h2 {
+    font-weight: 700;
+    margin: 0;
   }
 }
