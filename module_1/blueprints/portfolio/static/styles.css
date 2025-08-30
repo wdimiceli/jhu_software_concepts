@@ -86,6 +86,10 @@ section {
     @media (min-width: 960px) {
       flex-direction: row;
     }
+
+    & p {
+      max-width: 500px;
+    }
   }
 }
 
@@ -102,10 +106,20 @@ section {
   @media (min-width: 960px) {
     font-size: 112px;
   }
+
+  &:where(h2) {
+    font-size: 24px;
+    font-weight: 400;
+  }
+}
+
+.divider {
+  padding-bottom: 5px;
+  border-bottom: 3px solid rgb(from currentColor r g b / 0.5);
+  margin-bottom: 40px;
 }
 
 p {
-  max-width: 500px;
   font-size: 18px;
   line-height: 1.25;
 
@@ -119,6 +133,7 @@ small {
   font-style: italic;
   padding-left: 4vw;
   opacity: 0.6;
+  vertical-align: middle;
 
   @media (min-width: 960px) {
     font-size: 20px
@@ -141,6 +156,10 @@ a {
   &[data-active] {
     color: #d6444e;
     font-weight: 600;
+  }
+
+  &:hover, &:focus {
+    text-decoration: underline;
   }
 }
 
@@ -216,5 +235,16 @@ nav-layout {
   & > h2 {
     font-weight: 700;
     margin: 0;
+  }
+}
+
+.project-links {
+  border-left: 4px solid currentColor;
+  padding: 0 20px;
+  margin: 30px 0;
+
+  & a {
+    text-decoration: underline;
+    font-weight: 500;
   }
 }
