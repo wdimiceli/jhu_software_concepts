@@ -8,4 +8,4 @@ root_app.register_blueprint(portfolio)
 
 # Start up the server
 if __name__ == "__main__":
-    root_app.run(port=8080)
+    root_app.run(host='0.0.0.0', port=8080)
