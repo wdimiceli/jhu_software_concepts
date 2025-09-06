@@ -183,9 +183,14 @@ class AdmissionResult:
         if not isinstance(program_name, str):
             program_name = None
 
-        degree_type = (
-            DegreeType(degree_type.lower()) if isinstance(degree_type, str) else None
-        )
+        try:
+          if not degree_type:
+              degree_type = None
+          else:
+            degree_type = DegreeType(degree_type.lower())
+        except ValueError:
+            print(f"Failed to process degree type: {degree_type}... skipping")
+            degree_type = None
 
         full_info_anchor_element = table_columns.find("a", href=re.compile(r"^/result"))
         if not isinstance(full_info_anchor_element, Tag):
