@@ -55,7 +55,7 @@ class Tags:
 
             # -------- Process term --------
 
-            term_match = re.match(r"(?P<season>[A-Za-z])\s*?(?P<year>\d{2}|\d{4})", tag)
+            term_match = re.match(r"(?P<season>[A-Za-z]+)\s*?(?P<year>\d{4}|\d{2})", tag)
             if term_match:
                 season = term_match.group("season")
 
