@@ -132,6 +132,7 @@ class DegreeType(Enum):
     PSYD = "psyd"
     MFA = "mfa"
     MBA = "mba"
+    JD = "jd"
     OTHER = "other"
 
 
