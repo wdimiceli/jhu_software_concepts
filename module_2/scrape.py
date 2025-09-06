@@ -27,7 +27,7 @@ class SchoolSeason(Enum):
 @dataclass
 class Tags:
     season: SchoolSeason | None
-    year: str | None
+    year: int | None
     school_region: SchoolRegion | None
     gre_general: int | None
     gre_verbal: int | None
