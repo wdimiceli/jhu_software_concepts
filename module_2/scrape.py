@@ -282,7 +282,7 @@ if __name__ == "__main__":
         type=str,
         required=False,
         help="The output filename to save results to.",
-        default="results.json",
+        default="applicant_data.json",
     )
     parser.add_argument(
         "--page",
