@@ -128,6 +128,7 @@ class Decision:
 class DegreeType(Enum):
     MASTERS = "masters"
     PHD = "phd"
+    EDD = "edd"
     PSYD = "psyd"
     MFA = "mfa"
     MBA = "mba"
