@@ -111,7 +111,7 @@ class Decision:
     date: datetime
 
     @classmethod
-    def from_soup(cls, decision_str: str):
+    def from_soup(cls, decision_str: str, year: int):
         match = re.match(
             r"(?P<status>[A-Za-z\s]+?)\s+on\s+(?P<date_str>[0-9A-Za-z\s]+)$",
             decision_str,
@@ -120,7 +120,9 @@ class Decision:
             raise ValueError("Could not parse decision string from soup")
 
         status = DecisionStatus(match.group("status").lower().replace(" ", "_"))
-        date = datetime.strptime(match.group("date_str"), "%d %b")
+
+        full_date = match.group("date_str") + f", {year}"
+        date = datetime.strptime(full_date, "%d %b, %Y")
 
         return Decision(status=status, date=date)
 
@@ -151,17 +153,10 @@ class AdmissionResult:
     @classmethod
     def from_soup(cls, table_row: list[Tag]):
         table_columns, tags, comments_row, *_ = table_row + [None, None]
+
         assert isinstance(
             table_columns, Tag
-        )  # We need at least one tag or else something is wrong
-
-        school, program, added_on, decision, *_ = map(
-            lambda column: column.text.strip(), table_columns.find_all("td")
-        )
-
-        added_on = datetime.strptime(added_on, "%B %d, %Y") if added_on else None
-
-        decision = Decision.from_soup(decision)
+        )  # We need at least one element or something is wrong
 
         tags = Tags.from_soup(
             set(
@@ -172,6 +167,15 @@ class AdmissionResult:
             if tags
             else set[str]()
         )
+
+        school, program, added_on, decision, *_ = map(
+            lambda column: column.text.strip(), table_columns.find_all("td")
+        )
+
+        added_on = datetime.strptime(added_on, "%B %d, %Y") if added_on else None
+
+        decision_year = tags.year or (added_on.year if added_on else datetime.now().year)
+        decision = Decision.from_soup(decision, decision_year)
 
         comments: str = comments_row.text.strip() if comments_row else ""
 
