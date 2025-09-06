@@ -1,7 +1,6 @@
 import re
 import json
 import argparse
-from time import sleep
 from datetime import datetime
 from dataclasses import dataclass, asdict, is_dataclass
 from enum import Enum
@@ -176,7 +175,9 @@ class AdmissionResult:
 
         added_on = datetime.strptime(added_on, "%B %d, %Y") if added_on else None
 
-        decision_year = tags.year or (added_on.year if added_on else datetime.now().year)
+        decision_year = tags.year or (
+            added_on.year if added_on else datetime.now().year
+        )
         decision = Decision.from_soup(decision, decision_year)
 
         comments: str = comments_row.text.strip() if comments_row else ""
@@ -186,10 +187,10 @@ class AdmissionResult:
             program_name = None
 
         try:
-          if not degree_type:
-              degree_type = None
-          else:
-            degree_type = DegreeType(degree_type.lower())
+            if not degree_type:
+                degree_type = None
+            else:
+                degree_type = DegreeType(degree_type.lower())
         except ValueError:
             print(f"Failed to process degree type: {degree_type}... skipping")
             degree_type = None
@@ -287,6 +288,39 @@ def json_encoder(obj):
     raise TypeError(f"Cannot serialize object of type {type(obj)}")
 
 
+def scrape_data(page: int, limit: int):
+    pages_crawled = 0
+    more_pages = True
+
+    admission_results: list[AdmissionResult] = []
+
+    try:
+        while more_pages and not (limit and pages_crawled >= limit):
+            page_number = page + pages_crawled
+            print(f"Scraping page #{page_number}")
+
+            page_results, more_pages = scrape_page(page_number)
+            admission_results.extend(page_results)
+
+            print(
+                f"Success... found {len(page_results)} items; total = {len(admission_results)}"
+            )
+
+            pages_crawled += 1
+
+        print(f"Got {len(admission_results)} results")
+    except Exception as e:
+        print("Error during scrape: ", e)
+
+    return admission_results
+
+
+def save_scrape_results(admission_results: list[AdmissionResult], filename: str):
+    with open(filename, "w") as out_file:
+        json.dump(admission_results, out_file, default=json_encoder, indent=2)
+        print(f"Saved results to '{filename}'")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Scraper for TheGradCafe.")
     parser.add_argument(
@@ -311,26 +345,5 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    pages_crawled = 0
-    more_pages = True
-
-    admission_results: list[AdmissionResult] = []
-
-    while more_pages and not (args.limit and pages_crawled >= args.limit):
-        page_number = args.page + pages_crawled
-        print(f"Scraping page #{page_number}")
-
-        page_results, more_pages = scrape_page(page_number)
-        admission_results.extend(page_results)
-
-        print(f"Success... found {len(page_results)} items; total = {len(admission_results)}")
-
-        pages_crawled += 1
-
-        sleep(0.5) # Be polite
-
-    print(f"Got {len(admission_results)} results")
-
-    with open(args.out, "w") as out_file:
-        json.dump(admission_results, out_file, default=json_encoder, indent=2)
-        print(f"Saved results to '{args.out}'")
+    admission_results = scrape_data(args.page, args.limit)
+    save_scrape_results(admission_results, args.out)
