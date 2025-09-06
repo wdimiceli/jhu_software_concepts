@@ -47,6 +47,8 @@ class Tags:
         }
 
         for tag in tags:
+            tag = tag.lower()
+
             # -------- Process region --------
 
             if tag in SchoolRegion:
@@ -55,7 +57,7 @@ class Tags:
 
             # -------- Process term --------
 
-            term_match = re.match(r"(?P<season>[A-Za-z]+)\s*?(?P<year>\d{4}|\d{2})", tag)
+            term_match = re.match(r"(?P<season>[a-z]+)\s*?(?P<year>\d{4}|\d{2})", tag)
             if term_match:
                 season = term_match.group("season")
 
@@ -74,10 +76,10 @@ class Tags:
             # -------- Process grades --------
 
             grade_match = re.match(
-                r"(?P<test>GPA|GRE(?:\s+V|\s+AW)?)\s+(?P<score>[\d\.]+)$", tag
+                r"(?P<test>gpa|gre(?:\s+v|\s+aw)?)\s+(?P<score>[\d\.]+)$", tag
             )
             if grade_match:
-                test: str = grade_match.group("test").lower()
+                test: str = grade_match.group("test")
                 score: str = grade_match.group("score")
 
                 if test == "gpa":
