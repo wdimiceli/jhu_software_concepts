@@ -118,7 +118,8 @@ class Decision:
             decision_str,
         )
         if not match:
-            raise ValueError("Could not parse decision string from soup")
+            print(f"Failed to parse decision: {decision_str}")
+            return None
 
         status = DecisionStatus(match.group("status").lower().replace(" ", "_"))
 
@@ -146,7 +147,7 @@ class AdmissionResult:
     program_name: str | None
     degree_type: DegreeType | None
     added_on: datetime | None
-    decision: Decision
+    decision: Decision | None
     tags: Tags
     comments: str
     full_info_url: str
@@ -175,10 +176,14 @@ class AdmissionResult:
 
         added_on = datetime.strptime(added_on, "%B %d, %Y") if added_on else None
 
-        decision_year = tags.year or (
-            added_on.year if added_on else datetime.now().year
-        )
-        decision = Decision.from_soup(decision, decision_year)
+        try:
+            decision_year = tags.year or (
+                added_on.year if added_on else datetime.now().year
+            )
+            decision = Decision.from_soup(decision, decision_year)
+        except ValueError:
+            print(f"Failed to process decision: {decision}... skipping")
+            decision = None
 
         comments: str = comments_row.text.strip() if comments_row else ""
 
