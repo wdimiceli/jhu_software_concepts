@@ -34,7 +34,7 @@ class Tags:
     gpa: float | None
 
     @classmethod
-    def from_soup(cls, tags: set[str]):
+    def _from_soup(cls, tags: set[str]):
         expanded = {
             "season": None,
             "year": None,
@@ -112,7 +112,7 @@ class Decision:
     date: datetime
 
     @classmethod
-    def from_soup(cls, decision_str: str, year: int):
+    def _from_soup(cls, decision_str: str, year: int):
         match = re.match(
             r"(?P<status>[A-Za-z\s]+?)\s+on\s+(?P<date_str>[0-9A-Za-z\s]+)$",
             decision_str,
@@ -153,14 +153,14 @@ class AdmissionResult:
     full_info_url: str
 
     @classmethod
-    def from_soup(cls, table_row: list[Tag]):
+    def _from_soup(cls, table_row: list[Tag]):
         table_columns, tags, comments_row, *_ = table_row + [None, None]
 
         assert isinstance(
             table_columns, Tag
         )  # We need at least one element or something is wrong
 
-        tags = Tags.from_soup(
+        tags = Tags._from_soup(
             set(
                 map(
                     lambda tag: tag.text.strip(), tags.find_all(class_="tw-inline-flex")
@@ -180,7 +180,7 @@ class AdmissionResult:
             decision_year = tags.year or (
                 added_on.year if added_on else datetime.now().year
             )
-            decision = Decision.from_soup(decision, decision_year)
+            decision = Decision._from_soup(decision, decision_year)
         except ValueError:
             print(f"Failed to process decision: {decision}... skipping")
             decision = None
@@ -225,7 +225,7 @@ class AdmissionResult:
         )
 
 
-def check_robots_permission(url: ParsedURL, user_agent: str) -> bool:
+def _check_robots_permission(url: ParsedURL, user_agent: str) -> bool:
     robots_file_parser = RobotFileParser()
 
     robots_file_parser.set_url(f"https://{url.hostname}/robots.txt")
@@ -234,14 +234,19 @@ def check_robots_permission(url: ParsedURL, user_agent: str) -> bool:
     return robots_file_parser.can_fetch(user_agent, str(url))
 
 
-def get_table_rows(soup: BeautifulSoup):
+def _get_table_rows(soup: BeautifulSoup):
+    """Parses the HTML soup and returns a list of table entries corresponding to admission results."""
+    # Skip down to the first h1, which gets us roughly over the target.
     h1 = soup.find("h1")
     tbody = h1 and h1.find_next("tbody")
 
     assert isinstance(tbody, Tag)
 
+    # Collect up the table rows.
     rows = [child for child in tbody.children if isinstance(child, Tag)]
 
+    # Each admission result consumes 1 or more table rows in the HTML.
+    # Here we group them
     split_indices = [
         index
         for (index, row) in enumerate(rows)
@@ -252,35 +257,73 @@ def get_table_rows(soup: BeautifulSoup):
 
 
 def scrape_page(page: int):
-    assert page > 0
+    """Scrapes a single page on TheGradCafe.com"""
+    assert page > 0  # Sanity check
 
     user_agent = "WesBot/1.0"
     url = urlparse("https://www.thegradcafe.com/survey/?page=" + str(page))
     request = Request(url.geturl(), headers={"User-Agent": user_agent})
 
-    if not check_robots_permission(url, user_agent):
+    # Check to ensure we have permission before continuing.
+    if not _check_robots_permission(url, user_agent):
         raise Exception(
             f"robots.txt permission check failed with user agent [{user_agent}] and url: [{str(url)}]"
         )
 
+    # Get the HTML response and process it with BS.
     with urlopen(request) as response:
         html = response.read().decode("utf-8")
         soup = BeautifulSoup(html, "html.parser")
 
         admission_results: list[AdmissionResult] = [
-            AdmissionResult.from_soup(row) for row in get_table_rows(soup)
+            AdmissionResult._from_soup(row) for row in _get_table_rows(soup)
         ]
 
+        # Get all the anchor tags that point to other pages and parse out the page number.
         page_links = [
             int(str(anchor["href"]).split("=")[1])
+            # Finds <a/> elements with href="?page=123"
             for anchor in soup.find_all("a", href=re.compile(r".*\?page=\d+$"))
             if isinstance(anchor, Tag)
         ]
 
-        return admission_results, bool(page_links) and max(page_links) > page
+        # If we have links and one of them is a higher page number, then we have more to parse.
+        has_more_pages = bool(page_links) and max(page_links) > page
+
+        return admission_results, has_more_pages
 
 
-def json_encoder(obj):
+def scrape_data(page: int, limit: int):
+    """Iteratively scrapes data from TheGradCafe, starting with the given page, up to the maximum"""
+    pages_crawled = 0
+    more_pages = True
+
+    admission_results: list[AdmissionResult] = []
+
+    try:
+        # Start with the first page and iterate up to the limit or no more pages.
+        while more_pages and not (limit and pages_crawled >= limit):
+            page_number = page + pages_crawled
+
+            print(f"Scraping page #{page_number}")
+
+            page_results, more_pages = scrape_page(page_number)
+            admission_results.extend(page_results)
+
+            print(f"Success... found {len(page_results)} items; total = {len(admission_results)}")
+
+            pages_crawled += 1
+
+        print(f"Got {len(admission_results)} results")
+    except Exception as e:
+        # Stop the crawl here, report the error, and return what we have.
+        print("Error during scrape: ", e)
+
+    return admission_results
+
+
+def _json_encoder(obj):
+    """Cleanly serializes the types in this module to a JSON-friendly format."""
     if isinstance(obj, Enum):
         return obj.value
 
@@ -293,36 +336,10 @@ def json_encoder(obj):
     raise TypeError(f"Cannot serialize object of type {type(obj)}")
 
 
-def scrape_data(page: int, limit: int):
-    pages_crawled = 0
-    more_pages = True
-
-    admission_results: list[AdmissionResult] = []
-
-    try:
-        while more_pages and not (limit and pages_crawled >= limit):
-            page_number = page + pages_crawled
-            print(f"Scraping page #{page_number}")
-
-            page_results, more_pages = scrape_page(page_number)
-            admission_results.extend(page_results)
-
-            print(
-                f"Success... found {len(page_results)} items; total = {len(admission_results)}"
-            )
-
-            pages_crawled += 1
-
-        print(f"Got {len(admission_results)} results")
-    except Exception as e:
-        print("Error during scrape: ", e)
-
-    return admission_results
-
-
 def save_scrape_results(admission_results: list[AdmissionResult], filename: str):
+    """Saves the scrape results as JSON into the given filename."""
     with open(filename, "w") as out_file:
-        json.dump(admission_results, out_file, default=json_encoder, indent=2)
+        json.dump(admission_results, out_file, default=_json_encoder, indent=2)
         print(f"Saved results to '{filename}'")
 
 
