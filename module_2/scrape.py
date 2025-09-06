@@ -304,7 +304,7 @@ if __name__ == "__main__":
 
     admission_results: list[AdmissionResult] = []
 
-    while more_pages and not (args.limit and pages_crawled < args.limit):
+    while more_pages and not (args.limit and pages_crawled >= args.limit):
         page_number = args.page + pages_crawled
         print(f"Scraping page #{page_number}")
 
