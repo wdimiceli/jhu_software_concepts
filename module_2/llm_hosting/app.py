@@ -303,8 +303,9 @@ def _cli_process_file(
 
     try:
         for row in rows:
-            program_text = (row or {}).get("program") or ""
-            result = _call_llm(program_text)
+            program_text = (row or {}).get("program_name") or ""
+            school_name = (row or {}).get("school") or ""
+            result = _call_llm(f"{program_text}, {school_name}")
             row["llm-generated-program"] = result["standardized_program"]
             row["llm-generated-university"] = result["standardized_university"]
 
