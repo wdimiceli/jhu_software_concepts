@@ -345,6 +345,17 @@ def scrape_data(page: int, limit: int):
     return admission_results
 
 
+def generate_admissions_metadata(admission_results: list[AdmissionResult]):
+    schools = set(map(lambda result: result.school, admission_results))
+    programs = set(map(lambda result: result.program_name, admission_results))
+
+    return {
+        "total": len(admission_results),
+        "schools": schools,
+        "programs": programs,
+    }
+
+
 def _json_encoder(obj):
     """Cleanly serializes the types in this module to a JSON-friendly format."""
     if isinstance(obj, Enum):
