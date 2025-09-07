@@ -223,6 +223,29 @@ class AdmissionResult:
             comments=comments,
             full_info_url=full_info_url,
         )
+    
+    @classmethod
+    def from_json(cls, json: dict):
+        degree_type = json["degree_type"] and DegreeType(json["degree_type"])
+        added_on = json["added_on"] and datetime.fromisoformat(json["added_on"])
+        decision = json["decision"] and Decision(
+            status=json["decision"]["status"],
+            date=datetime.fromisoformat(json["decision"]["date"]),
+        )
+        tags = Tags(**json["tags"])
+
+        values = dict(json)
+        values.update(
+            degree_type=degree_type,
+            added_on=added_on,
+            decision=decision,
+            tags=tags,
+        )
+
+        return AdmissionResult(**values)
+
+    def to_json(self):
+        return asdict(self)
 
 
 def _check_robots_permission(url: ParsedURL, user_agent: str) -> bool:
@@ -326,9 +349,15 @@ def _json_encoder(obj):
     """Cleanly serializes the types in this module to a JSON-friendly format."""
     if isinstance(obj, Enum):
         return obj.value
+    
+    elif isinstance(obj, set):
+        return sorted(list(obj))
 
     elif isinstance(obj, datetime):
         return obj.isoformat()
+
+    elif hasattr(obj, "to_json"):
+        return obj.to_json()
 
     elif is_dataclass(obj):
         return asdict(obj)  # type: ignore
@@ -336,11 +365,17 @@ def _json_encoder(obj):
     raise TypeError(f"Cannot serialize object of type {type(obj)}")
 
 
-def save_scrape_results(admission_results: list[AdmissionResult], filename: str):
+def save_scrape_results(data: list[AdmissionResult] | dict, filename: str):
     """Saves the scrape results as JSON into the given filename."""
     with open(filename, "w") as out_file:
-        json.dump(admission_results, out_file, default=_json_encoder, indent=2)
+        json.dump(data, out_file, default=_json_encoder, indent=2)
         print(f"Saved results to '{filename}'")
+
+
+def load_scrape_results(filename: str) -> list[AdmissionResult]:
+    with open(filename, "r") as f:
+        serialized = json.load(f)
+        return list(map(AdmissionResult.from_json, serialized))
 
 
 if __name__ == "__main__":
