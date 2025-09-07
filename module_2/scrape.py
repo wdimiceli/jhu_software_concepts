@@ -35,6 +35,7 @@ class Tags:
 
     @classmethod
     def _from_soup(cls, tags: set[str]):
+        """Unpacks a set of tag values from a admission result entry."""
         expanded = {
             "season": None,
             "year": None,
@@ -142,6 +143,7 @@ class DegreeType(Enum):
 
 @dataclass
 class AdmissionResult:
+    """Represents a single entry from TheGradCafe."""
     id: str
     school: str
     program_name: str | None
@@ -154,40 +156,41 @@ class AdmissionResult:
 
     @classmethod
     def _from_soup(cls, table_row: list[Tag]):
-        table_columns, tags, comments_row, *_ = table_row + [None, None]
+        """Creates an AdmissionResult instance from a table row, scraped through BS4."""
+        table_columns, tags, comments_row, *_ = table_row + [None, None, None]
 
-        assert isinstance(
-            table_columns, Tag
-        )  # We need at least one element or something is wrong
+        assert isinstance(table_columns, Tag)  # We need at least one element or something is wrong
 
         tags = Tags._from_soup(
-            set(
-                map(
-                    lambda tag: tag.text.strip(), tags.find_all(class_="tw-inline-flex")
-                )
-            )
+            set(map(lambda tag: tag.text.strip(), tags.find_all(class_="tw-inline-flex")))
             if tags
             else set[str]()
         )
 
+        # Unpack table columns
         school, program, added_on, decision, *_ = map(
             lambda column: column.text.strip(), table_columns.find_all("td")
         )
 
         added_on = datetime.strptime(added_on, "%B %d, %Y") if added_on else None
 
+        # Process decision values from the appropriate table column.
         try:
             decision_year = tags.year or (
                 added_on.year if added_on else datetime.now().year
             )
             decision = Decision._from_soup(decision, decision_year)
         except ValueError:
+            # Sometimes these are missing or have invalid formatting, so we None this field.
             print(f"Failed to process decision: {decision}... skipping")
             decision = None
 
         comments: str = comments_row.text.strip() if comments_row else ""
 
+        # Program and degree type are separated by an SVG element, which manifests as a set of
+        # newlines when BS extracts the text from it.
         program_name, degree_type, *_ = re.split(r"\n{2,}", program) + [None, None]
+
         if not isinstance(program_name, str):
             program_name = None
 
@@ -200,12 +203,15 @@ class AdmissionResult:
             print(f"Failed to process degree type: {degree_type}... skipping")
             degree_type = None
 
+        # Each entry should have a link to the full info page -- we grab that and use it to
+        # find the entry's true ID value, which resides in the URL for it.
         full_info_anchor_element = table_columns.find("a", href=re.compile(r"^/result"))
         if not isinstance(full_info_anchor_element, Tag):
             raise RuntimeError("Failed to find result anchor")
 
         full_info_url = str(full_info_anchor_element["href"])
 
+        # Here, hrefs should always be in the form `/result/{id}`
         id_match = re.search(r".+\/(?P<id>\d+)$", full_info_url)
         if id_match is None:
             raise RuntimeError("anchor href for admission result is unrecognized")
@@ -226,12 +232,16 @@ class AdmissionResult:
     
     @classmethod
     def from_json(cls, json: dict):
+        """Deserializes an AdmissionResult instance from JSON."""
         degree_type = json["degree_type"] and DegreeType(json["degree_type"])
+
         added_on = json["added_on"] and datetime.fromisoformat(json["added_on"])
+
         decision = json["decision"] and Decision(
             status=json["decision"]["status"],
             date=datetime.fromisoformat(json["decision"]["date"]),
         )
+
         tags = Tags(**json["tags"])
 
         values = dict(json)
@@ -249,6 +259,7 @@ class AdmissionResult:
 
 
 def _check_robots_permission(url: ParsedURL, user_agent: str) -> bool:
+    """Checks that the given user agent has permission to crawl the URL."""
     robots_file_parser = RobotFileParser()
 
     robots_file_parser.set_url(f"https://{url.hostname}/robots.txt")
@@ -346,6 +357,7 @@ def scrape_data(page: int, limit: int):
 
 
 def generate_admissions_metadata(admission_results: list[AdmissionResult]):
+    """Computes a set of metadata about the scrape data, giving totals and de-duped values."""
     schools = set(map(lambda result: result.school, admission_results))
     programs = set(map(lambda result: result.program_name, admission_results))
 
@@ -384,6 +396,7 @@ def save_scrape_results(data: list[AdmissionResult] | dict, filename: str):
 
 
 def load_scrape_results(filename: str) -> list[AdmissionResult]:
+    """Loads the scrape data from the given filename and deserializes it."""
     with open(filename, "r") as f:
         serialized = json.load(f)
         return list(map(AdmissionResult.from_json, serialized))
@@ -391,6 +404,7 @@ def load_scrape_results(filename: str) -> list[AdmissionResult]:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Scraper for TheGradCafe.")
+
     parser.add_argument(
         "--out",
         type=str,
@@ -398,6 +412,7 @@ if __name__ == "__main__":
         help="The output filename to save results to.",
         default="applicant_data.json",
     )
+
     parser.add_argument(
         "--page",
         type=int,
@@ -405,12 +420,14 @@ if __name__ == "__main__":
         help="The page on which start crawling.",
         default=1,
     )
+
     parser.add_argument(
         "--limit",
         type=int,
         required=False,
         help="The maximum number of pages to crawl.",
     )
+
     args = parser.parse_args()
 
     admission_results = scrape_data(args.page, args.limit)
