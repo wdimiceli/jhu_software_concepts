@@ -2,7 +2,9 @@ from math import floor
 from flask import Blueprint, render_template, request, abort
 from model import AdmissionResult
 
+
 blueprint_name = "grad_data"
+
 
 bp = Blueprint(
     blueprint_name,
@@ -10,18 +12,34 @@ bp = Blueprint(
     template_folder="templates",
 )
 
+
 @bp.route("")
 def summary():
     """Render the admissions data summary HTML template"""
     try:
-        page = int(request.args.get('page', 1))
+        page = int(request.args.get("page", 1))
         if page < 1:
             raise ValueError()
     except ValueError:
         abort(400)
 
+    try:
+        year = request.args.get("year")
+
+        if year:
+            year = int(year)
+
+            if year < 2020 or year > 2025:
+                raise ValueError()
+    except ValueError:
+        abort(400)
+
     limit = 10  # Hardcoded for this page
-    total = AdmissionResult.count()
+
+    result = AdmissionResult.fetch(page * limit, limit, where={ "year": year })
+
+    total = result["total"]
+
     page_count = floor(total / limit)
 
     if page > page_count:
@@ -30,13 +48,19 @@ def summary():
     pagination_numbers = [1, 2] \
         + list(range(max(1, page - 3), min(page_count, page + 3))) \
         + [page_count - 1, page_count]
-
+    
+    facets = {
+        "year": year,
+    }
+    
     props = {
         "total": total,
         "page": page,
         "page_count": page_count,
-        "entries": AdmissionResult.fetch(page * limit, limit),
+        "entries": result["rows"],
         "pagination_numbers": list(dict.fromkeys(pagination_numbers)),
+        "facets": facets,
+        "facet_query": ''.join([f"&{key}={value}" for key, value in facets.items()]),
     }
 
     return render_template("summary.html", **props)

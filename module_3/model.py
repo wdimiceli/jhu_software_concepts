@@ -20,6 +20,7 @@ conn = psycopg.connect(
 
 
 def init_tables(recreate = False):
+    """Initializes the postgres tables for storing the admissions scrape data."""
     with conn.cursor() as cur:
         if recreate:
             print("Dropping tables and recreating...")
@@ -167,6 +168,20 @@ class DegreeType(Enum):
     OTHER = "other"
 
 
+def _build_where_clause(where={}):
+    params = []
+    columns = []
+
+    for key, value in where.items():
+        if value is not None:
+            columns.append(f"{key}=%s")
+            params.append(value)
+
+    if columns:
+        return f"\nWHERE {" AND ".join(columns)}", params
+    
+    return "", []
+
 @dataclass
 class AdmissionResult:
     """Represents a single entry from TheGradCafe."""
@@ -190,26 +205,36 @@ class AdmissionResult:
     llm_generated_university: str | None
 
     @classmethod
-    def count(cls):
+    def count(cls, where = {}):
         """Returns the count of all admission results in the database."""
+        where_clause, params = _build_where_clause(where)
+
         with conn.cursor() as cur:
-            cur.execute("""
-                SELECT COUNT(*) from admissions_info;
-            """)
+            cur.execute(f"""
+                SELECT COUNT(*) from admissions_info {where_clause};
+            """,
+            params)
 
             return cur.fetchone()[0] # type: ignore
         
     @classmethod
-    def fetch(cls, offset = 0, limit = 10):
-        with conn.cursor() as cur:
-            cur.execute("""
-                SELECT * from admissions_info
-                    OFFSET %s
-                    LIMIT %s;
-            """,
-            (offset, limit))
+    def fetch(cls, offset = 0, limit = 10, where = {}):
+        where_clause, params = _build_where_clause(where)
 
-            return map(AdmissionResult._from_db_row, cur.fetchall())
+        params.extend([offset, limit])
+
+        with conn.cursor() as cur:
+            cur.execute(f"""
+                SELECT * from admissions_info
+                {where_clause}
+                OFFSET %s
+                LIMIT %s;
+            """, params)
+
+            return {
+                "rows": map(cls._from_db_row, cur.fetchall()),
+                "total": cls.count(where)
+            }
 
     @classmethod
     def _from_db_row(cls, row):
@@ -386,7 +411,8 @@ class AdmissionResult:
                         llm_generated_program, llm_generated_university
                     )
                     VALUES (
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s,%s, %s, %s, %s, %s, %s, %s, %s, %s
                     )
                     ON CONFLICT (p_id) DO UPDATE SET
                         school = EXCLUDED.school,
