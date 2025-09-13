@@ -11,3 +11,6 @@ venv/
 env/
 
 *.gguf
+
+# Module 3: psql
+pgdata

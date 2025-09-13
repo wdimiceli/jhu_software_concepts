@@ -1,0 +1,35 @@
+{% extends "pages/_base.html" %}
+
+{% block main %}
+<section>
+  <h1>Wes DiMiceli</h1>
+  <small>Senior&nbsp;Engineering&nbsp;Manager @&nbsp;Bethesda&nbsp;Softworks</small>
+</section>
+
+<section class="two-column">
+  <div>
+    <p>
+      Hey there! I'm Wes, a JHU master's student aiming to learn about AI, especially how it can be used to empower creativity.
+      I have a background in economics and a career spent wrestling code into websites.
+    </p>
+
+    <p>
+      My daily life tends to be a mashup of logic and chaos. I enjoy solving puzzles; both the cardboard kind and the technical ones.
+      Violin practice, weightlifting, board games, convoluted NYC walks, rainstorm playlists, and cats are a few more of my favorite things.
+      A few I take seriously, but most I take very lightly. <br/> ... except dessert. Dessert deserves strong opinions.
+    </p>
+  </div>
+
+  <div class="bio-photo">
+    <img
+      src="{{ url_for('portfolio.static', filename='wdimiceli-jhu-bio-photo-comic.jpg') }}"
+      alt=""
+      aria-hidden
+    />
+    <img
+      src="{{ url_for('portfolio.static', filename='wdimiceli-jhu-bio-photo.jpg') }}"
+      alt="Photograph of Wes DiMiceli. He has a beard and glasses and is holding a small blue jay toy in their open palm. The toy displays the JHU logo."
+    />
+  </div>
+</section>
+{% endblock main %}
