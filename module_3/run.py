@@ -12,4 +12,4 @@ root_app.register_blueprint(grad_data, url_prefix="/grad-data")
 
 # Start up the server
 if __name__ == "__main__":
-    root_app.run(host='0.0.0.0', port=8080)
+    root_app.run(host='0.0.0.0', port=8080, debug=True)

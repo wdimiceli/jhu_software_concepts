@@ -1,6 +1,6 @@
 from math import floor
 from flask import Blueprint, render_template, request, abort
-from .model import AdmissionsEntry
+from model import AdmissionResult
 
 blueprint_name = "grad_data"
 
@@ -10,7 +10,7 @@ bp = Blueprint(
     template_folder="templates",
 )
 
-@bp.route("/")
+@bp.route("")
 def summary():
     """Render the admissions data summary HTML template"""
     try:
@@ -21,7 +21,7 @@ def summary():
         abort(400)
 
     limit = 10  # Hardcoded for this page
-    total = AdmissionsEntry.count()
+    total = AdmissionResult.count()
     page_count = floor(total / limit)
 
     if page > page_count:
@@ -35,7 +35,7 @@ def summary():
         "total": total,
         "page": page,
         "page_count": page_count,
-        "entries": AdmissionsEntry.fetch(page * limit, limit),
+        "entries": AdmissionResult.fetch(page * limit, limit),
         "pagination_numbers": list(dict.fromkeys(pagination_numbers)),
     }
 

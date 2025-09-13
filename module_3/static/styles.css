@@ -64,11 +64,14 @@ table {
   font-weight: 100;
   font-style: normal;
   font-variation-settings: "wdth" 100;
+
+  --color-primary: #f9f9f9;
+  --color-secondary: #d6444e;
 }
 
 body {
   background: #423b3b;
-  color: #f9f9f9;
+  color: var(--color-primary);
 }
 
 section {
@@ -154,7 +157,7 @@ a {
   text-decoration: none;
 
   &[data-active] {
-    color: #d6444e;
+    color: var(--color-secondary);
     font-weight: 600;
   }
 
@@ -247,4 +250,29 @@ nav-layout {
     text-decoration: underline;
     font-weight: 500;
   }
+}
+
+.pagination {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 16px;
+  font-weight: bold;
+
+  & [data-active] {
+    color: var(--color-secondary);
+    pointer-events: none;
+  }
+}
+
+.admissions-listing {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.admissions-entry {
+  border-radius: 10px;
+  background: rgba(0 0 0 / 0.5);
+  min-height: 64px;
+  padding: 14px;
 }

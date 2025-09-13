@@ -4,32 +4,25 @@ from typing import Any
 from llm_hosting.app import _cli_process_file
 
 
-def save_cleaned_results(cleaned_admission_results: list[Any], filename: str):
-    """Saves the cleaned results as JSON into the given filename."""
-    with open(filename, "w") as out_file:
-        json.dump(cleaned_admission_results, out_file, indent=2)
-        print(f"Saved results to '{filename}'")
+# def save_cleaned_results(cleaned_admission_results: list[Any], filename: str):
+#     """Saves the cleaned results as JSON into the given filename."""
+#     with open(filename, "w") as out_file:
+#         json.dump(cleaned_admission_results, out_file, indent=2)
+#         print(f"Saved results to '{filename}'")
 
 
-def load_data(filename: str):
-    """Loads the cleaned admissions data from the given filename."""
-    with open(filename, "r") as f:
-        lines = f.readlines()
-        return map(lambda entry: json.loads(entry), lines)
+# def clean_data(data_filename, out_filename: str):
+#     """Runs the raw admissions data through an LLM data cleaning tool."""
+#     # Note to grader: I recognize this function is "private", but for the sake of leaving
+#     # llm_hosting completely unmodified, I am going to import this and use it directly.
+#     _cli_process_file(
+#         in_path=data_filename,
+#         out_path=out_filename,
+#         append=False,
+#         to_stdout=False,
+#     )
 
-
-def clean_data(data_filename, out_filename: str):
-    """Runs the raw admissions data through an LLM data cleaning tool."""
-    # Note to grader: I recognize this function is "private", but for the sake of leaving
-    # llm_hosting completely unmodified, I am going to import this and use it directly.
-    _cli_process_file(
-        in_path=data_filename,
-        out_path=out_filename,
-        append=False,
-        to_stdout=False,
-    )
-
-    return load_data(data_filename)
+#     return load_data(data_filename)
 
 
 if __name__ == "__main__":

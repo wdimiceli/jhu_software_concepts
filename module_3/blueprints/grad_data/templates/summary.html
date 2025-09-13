@@ -1,17 +1,27 @@
 {% extends "base.html" %}
 
 {% block main %}
-  {% for entry in entries %}
-    <div>
-      <p>{{ entry.p_id }}</p>
-    </div>
-  {% endfor %}
+  <section class="admissions-listing">
+    {% for entry in entries %}
+      <div class="admissions-entry">
+        <p>{{ entry.id }}</p>
+      </div>
+    {% endfor %}
 
-  <p>Total: {{ total }}</p>
+    <p>Total: {{ total }}</p>
+  </section>
 
-  <ul>
+
+  <ul class="pagination">
     {% for i in pagination_numbers %}
-      <li><a href="?page={{ i }}">{{ i }}</a></li>
+      <li>
+        <a
+          href="?page={{ i }}"
+          {{ 'data-active tabindex=-1' if i == page else '' | safe }}
+        >
+          {{ i }}
+        </a>
+      </li>
     {% endfor %}  
   </ul>
 
