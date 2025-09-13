@@ -14,8 +14,8 @@ def save_cleaned_results(cleaned_admission_results: list[Any], filename: str):
 def load_data(filename: str):
     """Loads the cleaned admissions data from the given filename."""
     with open(filename, "r") as f:
-        lines = list(f.read())
-        return json.loads(f"[{",".join(lines)}]")
+        lines = f.readlines()
+        return map(lambda entry: json.loads(entry), lines)
 
 
 def clean_data(data_filename, out_filename: str):
