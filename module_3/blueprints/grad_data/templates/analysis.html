@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+
+{% block main %}
+  <h1>Analysis</h1>
+
+  <section>
+    {% for qa in questions %}
+      <div>
+        <h2>{{ qa["prompt"] }} </h2>
+        <p>{{ qa["answer"] }} </p>
+      </div>
+    {% endfor %}
+  </section>
+
+{% endblock main %}

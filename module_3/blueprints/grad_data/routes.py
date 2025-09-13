@@ -1,6 +1,7 @@
 from math import floor
 from flask import Blueprint, render_template, request, abort
 from model import AdmissionResult
+from query_data import answer_questions
 
 
 blueprint_name = "grad_data"
@@ -13,7 +14,7 @@ bp = Blueprint(
 )
 
 
-@bp.route("")
+@bp.route("/")
 def summary():
     """Render the admissions data summary HTML template"""
     try:
@@ -60,7 +61,20 @@ def summary():
         "entries": result["rows"],
         "pagination_numbers": list(dict.fromkeys(pagination_numbers)),
         "facets": facets,
-        "facet_query": ''.join([f"&{key}={value}" for key, value in facets.items()]),
+        "facet_query": ''.join([f"&{key}={value}" for key, value in facets.items() if value]),
     }
 
     return render_template("summary.html", **props)
+
+
+@bp.route("/analysis")
+def analysis():
+    """""" 
+    # Next, come up with 2 addi5onal ques5ons that you are curious to answer — formulate those ques5ons
+    # in words, and then write SQL code to answe
+
+    props = {
+        "questions": answer_questions(),
+    }
+
+    return render_template("analysis.html", **props)

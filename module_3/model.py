@@ -169,6 +169,7 @@ class DegreeType(Enum):
 
 
 def _build_where_clause(where={}):
+    """Given a set of key/value pairs, builds a WHERE clause for a SQL query."""
     params = []
     columns = []
 
@@ -181,6 +182,7 @@ def _build_where_clause(where={}):
         return f"\nWHERE {" AND ".join(columns)}", params
     
     return "", []
+
 
 @dataclass
 class AdmissionResult:
@@ -235,6 +237,11 @@ class AdmissionResult:
                 "rows": map(cls._from_db_row, cur.fetchall()),
                 "total": cls.count(where)
             }
+
+    @classmethod
+    def execute_raw(cls, query, params):
+        with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
+            return cur.execute(query, params).fetchall()
 
     @classmethod
     def _from_db_row(cls, row):
