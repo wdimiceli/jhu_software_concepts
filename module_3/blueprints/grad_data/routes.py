@@ -1,0 +1,42 @@
+from math import floor
+from flask import Blueprint, render_template, request, abort
+from .model import AdmissionsEntry
+
+blueprint_name = "grad_data"
+
+bp = Blueprint(
+    blueprint_name,
+    __name__,
+    template_folder="templates",
+)
+
+@bp.route("/")
+def summary():
+    """Render the admissions data summary HTML template"""
+    try:
+        page = int(request.args.get('page', 1))
+        if page < 1:
+            raise ValueError()
+    except ValueError:
+        abort(400)
+
+    limit = 10  # Hardcoded for this page
+    total = AdmissionsEntry.count()
+    page_count = floor(total / limit)
+
+    if page > page_count:
+        abort(404)
+
+    pagination_numbers = [1, 2] \
+        + list(range(max(1, page - 3), min(page_count, page + 3))) \
+        + [page_count - 1, page_count]
+
+    props = {
+        "total": total,
+        "page": page,
+        "page_count": page_count,
+        "entries": AdmissionsEntry.fetch(page * limit, limit),
+        "pagination_numbers": list(dict.fromkeys(pagination_numbers)),
+    }
+
+    return render_template("summary.html", **props)

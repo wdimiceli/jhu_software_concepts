@@ -3,11 +3,11 @@
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <link rel="stylesheet" href="{{ url_for('portfolio.static', filename='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
   </head>
 
   <body>
-    {% include "components/nav.html" %}
+    {% include "nav.html" %}
 
     <main>
       {% block main %}{% endblock main %}

@@ -1,4 +1,4 @@
-{% extends "pages/_base.html" %}
+{% extends "base.html" %}
 
 {% block main %}
 <section>
@@ -22,12 +22,12 @@
 
   <div class="bio-photo">
     <img
-      src="{{ url_for('portfolio.static', filename='wdimiceli-jhu-bio-photo-comic.jpg') }}"
+      src="{{ url_for('static', filename='wdimiceli-jhu-bio-photo-comic.jpg') }}"
       alt=""
       aria-hidden
     />
     <img
-      src="{{ url_for('portfolio.static', filename='wdimiceli-jhu-bio-photo.jpg') }}"
+      src="{{ url_for('static', filename='wdimiceli-jhu-bio-photo.jpg') }}"
       alt="Photograph of Wes DiMiceli. He has a beard and glasses and is holding a small blue jay toy in their open palm. The toy displays the JHU logo."
     />
   </div>
