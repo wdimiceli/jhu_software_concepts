@@ -23,27 +23,34 @@ bp = Blueprint(
 )
 
 
-scrape_is_running = False # global flag
+scrape_state = {
+    "running": False,
+}
 
 
 def begin_refresh():
     """Scrape new data and save to the database."""
-    global scrape_is_running
+    global scrape_state
 
-    scrape_is_running = True
+    scrape_state["running"] = True
 
     try:
         latest_id = AdmissionResult.get_latest_id()
         print(f"Latest id: {latest_id}")
 
-        entries = scrape_data(1, stop_at_id=latest_id)
+        entries = scrape_data(1, 30000, latest_id)
 
         for entry in entries:
-            entry.clean_and_augment()
+            # entry.clean_and_augment()
             entry.save_to_db()
 
+        scrape_state = {
+            "running": False,
+            "entries": entries,
+        }
+
     finally:
-        scrape_is_running = False
+        scrape_state["running"] = False
 
 
 @bp.route("/analysis", methods=["GET", "POST"])
@@ -53,19 +60,21 @@ def analysis():
     This function fetches a predefined set of questions and their answers from
     the `query_data` module and passes them to the `analysis.html` template.
     """
-    global scrape_is_running
+    global scrape_state
 
     refresh = "refresh" in request.args
+    poll = "poll" in request.args
 
     if request.method == "POST":
-        if not scrape_is_running:
+        if not scrape_state["running"]:
             threading.Thread(target=begin_refresh, daemon=True).start()
 
     # Get the list of questions and their pre-calculated answers.
     props = {
         "questions": answer_questions(),
         "refresh": refresh,
-        "scrape_is_running": scrape_is_running
+        "poll": poll,
+        "scrape_state": scrape_state
     }
 
     # Render the HTML template with the prepared properties.
