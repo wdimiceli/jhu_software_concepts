@@ -4,6 +4,7 @@ This module provides functionality to load scraped admissions data into a Postgr
 """
 
 import argparse
+import json
 from model import AdmissionResult, init_tables, conn
 
 
@@ -12,12 +13,13 @@ def load_admissions_results(recreate=False):
     init_tables(recreate)
 
     # Read the data from the specified JSON file
-    entries = AdmissionResult.from_plaintext_rows("llm_extend_applicant_data.json")
+    with open("admissions_info.json", "r") as f:
+        entries = json.load(f)
 
     try:
         # Save each entry to the database
         for entry in entries:
-            entry.save_to_db()
+            AdmissionResult.from_dict(entry).save_to_db()
 
         conn.commit()
 

@@ -10,7 +10,6 @@ import re
 import json
 from datetime import datetime
 from dataclasses import asdict, dataclass, is_dataclass
-from enum import Enum
 
 from bs4.element import Tag
 
@@ -67,20 +66,6 @@ def init_tables(recreate=False):
         conn.commit()
 
 
-class ApplicantRegion(Enum):
-    """Enumeration for the geographical region of an applicant."""
-
-    INTERNATIONAL = "international"
-    AMERICAN = "american"
-
-
-class SchoolSeason(Enum):
-    """Enumeration for the term season."""
-
-    FALL = "fall"
-    SPRING = "spring"
-
-
 def _tags_from_soup(tags: set[str]):
     """Unpacks a set of tag values from a admission result entry.
 
@@ -102,8 +87,8 @@ def _tags_from_soup(tags: set[str]):
 
         # -------- Process region --------
 
-        if tag in [r.value for r in ApplicantRegion]:
-            expanded["applicant_region"] = ApplicantRegion(tag)
+        if tag in ['international', 'american']:
+            expanded["applicant_region"] = tag
             continue
 
 
@@ -134,9 +119,9 @@ def _tags_from_soup(tags: set[str]):
         if term_match:
             season = term_match.group("season")
 
-            for season_category in SchoolSeason:
-                if season_category.value.startswith(season):
-                    expanded["season"] = SchoolSeason(season)
+            for season_category in ['fall', 'winter', 'spring', 'summer']:
+                if season_category.startswith(season):
+                    expanded["season"] = season
                     break
 
             year = term_match.group("year")
@@ -147,16 +132,6 @@ def _tags_from_soup(tags: set[str]):
             continue
 
     return expanded
-
-
-class DecisionStatus(Enum):
-    """Enumeration for the status of an application decision."""
-
-    ACCEPTED = "accepted"
-    INTERVIEW_PENDING = "interview"
-    WAIT_LISTED = "wait_listed"
-    REJECTED = "rejected"  # :'(
-    OTHER = "other"
 
 
 def _decision_from_soup(decision_str: str, added_on_year: int):
@@ -170,7 +145,7 @@ def _decision_from_soup(decision_str: str, added_on_year: int):
         print(f"Failed to parse decision: {decision_str}")
         return None, None
 
-    status = DecisionStatus(match.group("status").lower().replace(" ", "_"))
+    status = match.group("status").lower().replace(" ", "_")
     date_part = match.group("date_str")
     
     # Try to parse with the date it was added with
@@ -197,19 +172,6 @@ def _decision_from_soup(decision_str: str, added_on_year: int):
     return status, date
 
 
-class DegreeType(Enum):
-    """Enumeration for the type of degree an applicant is seeking."""
-
-    MASTERS = "masters"
-    PHD = "phd"
-    EDD = "edd"
-    PSYD = "psyd"
-    MFA = "mfa"
-    MBA = "mba"
-    JD = "jd"
-    OTHER = "other"
-
-
 def _build_where_clause(where={}):
     """Given a set of key/value pairs, builds a WHERE clause for a SQL query."""
     params = []
@@ -233,13 +195,13 @@ class AdmissionResult:
     id: int
     school: str
     program_name: str | None
-    degree_type: DegreeType | None
+    degree_type: str | None
     added_on: datetime | None
-    decision_status: DecisionStatus | None
+    decision_status: str | None
     decision_date: datetime | None
-    season: SchoolSeason | None
+    season: str | None
     year: int | None
-    applicant_region: ApplicantRegion | None
+    applicant_region: str | None
     gre_general: int | None
     gre_verbal: int | None
     gre_analytical_writing: float | None
@@ -335,12 +297,6 @@ class AdmissionResult:
             llm_generated_university,
         ) = row
 
-        # Wrap strings into enums
-        decision_status = DecisionStatus(decision_status) if decision_status else None
-        applicant_region = ApplicantRegion(applicant_region) if applicant_region else None
-        degree_type = DegreeType(degree_type) if degree_type else None
-        season = SchoolSeason(season) if season else None
-
         return AdmissionResult(
             id=id,
             school=school,
@@ -412,7 +368,7 @@ class AdmissionResult:
             if not degree_type:
                 degree_type = None
             else:
-                degree_type = DegreeType(degree_type.lower())
+                degree_type = degree_type.lower()
         except ValueError:
             print(f"Failed to process degree type: {degree_type}... skipping")
             degree_type = None
@@ -456,8 +412,6 @@ class AdmissionResult:
     @classmethod
     def from_dict(cls, plain: dict):
         """Deserialize an AdmissionResult instance from a JSON-friendly dictionary."""
-        degree_type = plain["degree_type"] and DegreeType(plain["degree_type"])
-
         added_on = plain.get("added_on", None) or None
         if added_on:
             added_on = datetime.fromisoformat(added_on)
@@ -468,23 +422,16 @@ class AdmissionResult:
 
         values = dict(plain)
         values.update(
-            degree_type=degree_type,
             added_on=added_on,
             decision_date=decision_date,
         )
 
+        if "program" in values:
+            del values["program"]
+        if "term" in values:
+            del values["term"]
+
         return AdmissionResult(**values)
-
-    @classmethod
-    def from_plaintext_rows(cls, filename: str):
-        """Load the cleaned admissions data from the given filename.
-
-        The file is expected to contain one JSON object per line.
-        """
-        with open(filename, "r") as f:
-            lines = f.readlines()
-            dicts = map(lambda entry: json.loads(entry), lines)
-            return map(AdmissionResult.from_dict, dicts)
 
     def to_json(self):
         """Serialize the AdmissionResult object to a JSON string."""
@@ -535,18 +482,18 @@ class AdmissionResult:
                         self.comments,
                         self.added_on,
                         self.full_info_url,
-                        self.decision_status.value if self.decision_status else None,
+                        self.decision_status,
                         self.decision_date,
-                        self.season.value if self.season else None,
+                        self.season,
                         self.year,
                         # Redundant but the assignment calls for it
                         f"{self.season} {self.year}",
-                        self.applicant_region.value if self.applicant_region else None,
+                        self.applicant_region,
                         self.gpa,
                         self.gre_general,
                         self.gre_verbal,
                         self.gre_analytical_writing,
-                        self.degree_type.value if self.degree_type else None,
+                        self.degree_type,
                         self.llm_generated_program,
                         self.llm_generated_university,
                     ),
@@ -573,10 +520,7 @@ class AdmissionResult:
 
 def _json_encoder(obj):
     """Serialize the types in this module to a JSON-friendly format."""
-    if isinstance(obj, Enum):
-        return obj.value
-
-    elif isinstance(obj, set):
+    if isinstance(obj, set):
         return sorted(list(obj))
 
     elif isinstance(obj, datetime):
