@@ -112,7 +112,7 @@ def _tags_from_soup(tags: set[str]):
 
             for season_category in SchoolSeason:
                 if season_category.value.startswith(season):
-                    expanded["season"] = season
+                    expanded["season"] = SchoolSeason(season)
                     break
 
             year = term_match.group("year")
