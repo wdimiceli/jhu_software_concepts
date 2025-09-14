@@ -277,7 +277,11 @@ class AdmissionResult:
                 params,
             )
 
-            return {"rows": map(cls._from_db_row, cur.fetchall()), "total": cls.count(where)}
+            return {
+                "rows": [cls._from_db_row(r) for r in cur.fetchall()],
+                "total": cls.count(where),
+            }
+
 
     @classmethod
     def execute_raw(cls, query, params):
