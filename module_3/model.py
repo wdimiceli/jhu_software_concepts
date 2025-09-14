@@ -179,7 +179,9 @@ def _decision_from_soup(decision_str: str, added_on_year: int):
 
     today = datetime.now()
 
-    # Check if the parsed date is in the future
+    # Since decision dates only include month/day, we pick the most recent past year
+    # that makes sense relative to when the entry was added.
+
     if parsed_date > today:
         # If it is, subtract one year
         year = today.year - 1
