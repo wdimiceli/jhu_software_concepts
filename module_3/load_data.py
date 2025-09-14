@@ -19,7 +19,7 @@ def load_admissions_results(filename: str, recreate=False):
     with open(filename, "r") as f:
         entries = json.load(f)
 
-    print(f"Read {len(entries)} from JSON file {filename} ...")
+    print(f"Read {len(entries)} entries from JSON file {filename} ...")
 
     try:
         # Save each entry to the database
@@ -62,4 +62,4 @@ if __name__ == "__main__":
 
     start_postgres()
 
-    load_admissions_results(args.recreate_tables)
+    load_admissions_results(args.json_file, args.recreate_tables)
