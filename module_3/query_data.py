@@ -37,7 +37,7 @@ def answer_questions():
                         COUNT(*) AS total,
                         COUNT(*) FILTER (WHERE us_or_international=%s) as intl_student_count
                     FROM {table_name}
-                );
+                ) AS intl_students;
             """,
                 ["international"],
             )[0]["pct"],
@@ -101,7 +101,7 @@ def answer_questions():
                         COUNT(*) FILTER (WHERE status=%s) as accepted
                     FROM {table_name}
                     WHERE year=%s AND season=%s
-                );
+                ) AS fall_2025_students;
             """,
                 ["accepted", 2025, "fall"],
             )[0]["pct"],
