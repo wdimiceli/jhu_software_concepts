@@ -1,3 +1,8 @@
+"""Data models and database interaction for TheGradCafe scraper.
+
+The `AdmissionResult` class serves as the primary model for an admissions record.
+"""
+
 import psycopg
 import psycopg.rows
 import atexit
@@ -10,17 +15,18 @@ from enum import Enum
 from bs4.element import Tag
 
 
+# Global connection object to the PostgreSQL database.
 conn = psycopg.connect(
     dbname="admissions",
     user="student",
     password="modernsoftwareconcepts",
     host="localhost",
-    port=5432
+    port=5432,
 )
 
 
-def init_tables(recreate = False):
-    """Initializes the postgres tables for storing the admissions scrape data."""
+def init_tables(recreate=False):
+    """Initialize the postgres tables for storing the admissions scrape data."""
     with conn.cursor() as cur:
         if recreate:
             print("Dropping tables and recreating...")
@@ -57,18 +63,26 @@ def init_tables(recreate = False):
         """)
 
 
-class SchoolRegion(Enum):
+class ApplicantRegion(Enum):
+    """Enumeration for the geographical region of an applicant."""
+
     INTERNATIONAL = "international"
     AMERICAN = "american"
 
 
 class SchoolSeason(Enum):
+    """Enumeration for the term season."""
+
     FALL = "fall"
     SPRING = "spring"
 
 
 def _tags_from_soup(tags: set[str]):
-    """Unpacks a set of tag values from a admission result entry."""
+    """Unpacks a set of tag values from a admission result entry.
+
+    Parses a set of string tags from the HTML and extracts structured information
+    like application year, season, region, and test scores.
+    """
     expanded = {
         "season": None,
         "year": None,
@@ -84,8 +98,8 @@ def _tags_from_soup(tags: set[str]):
 
         # -------- Process region --------
 
-        if tag in SchoolRegion:
-            expanded["school_region"] = SchoolRegion(tag)
+        if tag in ApplicantRegion:
+            expanded["school_region"] = ApplicantRegion(tag)
             continue
 
         # -------- Process term --------
@@ -108,9 +122,7 @@ def _tags_from_soup(tags: set[str]):
 
         # -------- Process grades --------
 
-        grade_match = re.match(
-            r"(?P<test>gpa|gre(?:\s+v|\s+aw)?)\s+(?P<score>[\d\.]+)$", tag
-        )
+        grade_match = re.match(r"(?P<test>gpa|gre(?:\s+v|\s+aw)?)\s+(?P<score>[\d\.]+)$", tag)
         if grade_match:
             test: str = grade_match.group("test")
             score: str = grade_match.group("score")
@@ -133,6 +145,8 @@ def _tags_from_soup(tags: set[str]):
 
 
 class DecisionStatus(Enum):
+    """Enumeration for the status of an application decision."""
+
     ACCEPTED = "accepted"
     INTERVIEW_PENDING = "interview"
     WAIT_LISTED = "wait_listed"
@@ -141,6 +155,7 @@ class DecisionStatus(Enum):
 
 
 def _decision_from_soup(decision_str: str, year: int):
+    """Parse a decision string and returns the status and date."""
     match = re.match(
         r"(?P<status>[A-Za-z\s]+?)\s+on\s+(?P<date_str>[0-9A-Za-z\s]+)$",
         decision_str,
@@ -158,6 +173,8 @@ def _decision_from_soup(decision_str: str, year: int):
 
 
 class DegreeType(Enum):
+    """Enumeration for the type of degree an applicant is seeking."""
+
     MASTERS = "masters"
     PHD = "phd"
     EDD = "edd"
@@ -179,14 +196,15 @@ def _build_where_clause(where={}):
             params.append(value)
 
     if columns:
-        return f"\nWHERE {" AND ".join(columns)}", params
-    
+        return f"\nWHERE {' AND '.join(columns)}", params
+
     return "", []
 
 
 @dataclass
 class AdmissionResult:
     """Represents a single entry from TheGradCafe."""
+
     id: str
     school: str
     program_name: str | None
@@ -196,7 +214,7 @@ class AdmissionResult:
     decision_date: datetime | None
     season: SchoolSeason | None
     year: int | None
-    school_region: SchoolRegion | None
+    school_region: ApplicantRegion | None
     gre_general: int | None
     gre_verbal: int | None
     gre_analytical_writing: float | None
@@ -207,64 +225,79 @@ class AdmissionResult:
     llm_generated_university: str | None
 
     @classmethod
-    def count(cls, where = {}):
-        """Returns the count of all admission results in the database."""
+    def count(cls, where={}):
+        """Return the count of all admission results in the database.
+
+        Args:
+            where (dict): Optional dictionary for filtering the count.
+
+        Returns:
+            int: The total count of entries matching the criteria.
+
+        """
         where_clause, params = _build_where_clause(where)
 
         with conn.cursor() as cur:
-            cur.execute(f"""
+            cur.execute(
+                f"""
                 SELECT COUNT(*) from admissions_info {where_clause};
             """,
-            params)
+                params,
+            )
 
-            return cur.fetchone()[0] # type: ignore
-        
+            return cur.fetchone()[0]  # type: ignore
+
     @classmethod
-    def fetch(cls, offset = 0, limit = 10, where = {}):
+    def fetch(cls, offset=0, limit=10, where={}):
+        """Fetch a paginated list of admission results from the database."""
         where_clause, params = _build_where_clause(where)
 
         params.extend([offset, limit])
 
         with conn.cursor() as cur:
-            cur.execute(f"""
+            cur.execute(
+                f"""
                 SELECT * from admissions_info
                 {where_clause}
                 OFFSET %s
                 LIMIT %s;
-            """, params)
+            """,
+                params,
+            )
 
-            return {
-                "rows": map(cls._from_db_row, cur.fetchall()),
-                "total": cls.count(where)
-            }
+            return {"rows": map(cls._from_db_row, cur.fetchall()), "total": cls.count(where)}
 
     @classmethod
     def execute_raw(cls, query, params):
+        """Execute a raw SQL query and returns the results as a list of dictionaries."""
         with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
             return cur.execute(query, params).fetchall()
 
     @classmethod
     def _from_db_row(cls, row):
-        (id,
-        school,
-        program_name,
-        _program,
-        comments,
-        added_on,
-        full_info_url,
-        decision_status,
-        decision_date,
-        season,
-        year,
-        _term,
-        school_region,
-        gpa,
-        gre_general,
-        gre_verbal,
-        gre_analytical_writing,
-        degree_type,
-        llm_generated_program,
-        llm_generated_university) = row
+        """Construct an AdmissionResult object from a database row."""
+        (
+            id,
+            school,
+            program_name,
+            _program,
+            comments,
+            added_on,
+            full_info_url,
+            decision_status,
+            decision_date,
+            season,
+            year,
+            _term,
+            school_region,
+            gpa,
+            gre_general,
+            gre_verbal,
+            gre_analytical_writing,
+            degree_type,
+            llm_generated_program,
+            llm_generated_university,
+        ) = row
 
         return AdmissionResult(
             id=id,
@@ -289,10 +322,16 @@ class AdmissionResult:
 
     @classmethod
     def from_soup(cls, table_row: list[Tag]):
-        """Creates an AdmissionResult instance from a table row, scraped through BS4."""
+        """Create an AdmissionResult instance from a table row, scraped through BS4.
+
+        This method parses a list of BeautifulSoup `Tag` objects that represent a
+        single admission entry in the HTML table and constructs an `AdmissionResult`
+        dataclass instance from it.
+        """
         table_columns, tags, comments_row, *_ = table_row + [None, None, None]
 
-        assert isinstance(table_columns, Tag)  # We need at least one element or something is wrong
+        # We need at least one element or something is wrong
+        assert isinstance(table_columns, Tag)
 
         tags = _tags_from_soup(
             set(map(lambda tag: tag.text.strip(), tags.find_all(class_="tw-inline-flex")))
@@ -309,9 +348,7 @@ class AdmissionResult:
 
         # Process decision values from the appropriate table column.
         try:
-            decision_year = tags["year"] or (
-                added_on.year if added_on else datetime.now().year
-            )
+            decision_year = tags["year"] or (added_on.year if added_on else datetime.now().year)
 
             decision_status, decision_date = _decision_from_soup(decision, decision_year)
         except ValueError:
@@ -372,10 +409,10 @@ class AdmissionResult:
             llm_generated_program=None,
             llm_generated_university=None,
         )
-    
+
     @classmethod
     def from_dict(cls, plain: dict):
-        """Deserializes an AdmissionResult instance from JSON."""
+        """Deserialize an AdmissionResult instance from a JSON-friendly dictionary."""
         degree_type = plain["degree_type"] and DegreeType(plain["degree_type"])
 
         added_on = plain.get("added_on", None) or None
@@ -394,19 +431,24 @@ class AdmissionResult:
         )
 
         return AdmissionResult(**values)
-    
+
     @classmethod
     def from_plaintext_rows(cls, filename: str):
-        """Loads the cleaned admissions data from the given filename."""
+        """Load the cleaned admissions data from the given filename.
+
+        The file is expected to contain one JSON object per line.
+        """
         with open(filename, "r") as f:
             lines = f.readlines()
             dicts = map(lambda entry: json.loads(entry), lines)
             return map(AdmissionResult.from_dict, dicts)
 
     def to_json(self):
+        """Serialize the AdmissionResult object to a JSON string."""
         return json.dumps(self, default=_json_encoder, indent=2)
-    
+
     def save_to_db(self):
+        """Save the AdmissionResult instance to the database."""
         try:
             with conn.cursor() as cur:
                 cur.execute(
@@ -424,7 +466,6 @@ class AdmissionResult:
                     ON CONFLICT (p_id) DO UPDATE SET
                         school = EXCLUDED.school,
                         program_name = EXCLUDED.program_name,
-                        program = EXCLUDED.program,
                         comments = EXCLUDED.comments,
                         date_added = EXCLUDED.date_added,
                         url = EXCLUDED.url,
@@ -446,10 +487,8 @@ class AdmissionResult:
                         self.id,
                         self.school,
                         self.program_name,
-
                         # Redundant but the assignment calls for it
                         f"{self.school} {self.program_name}",
-
                         self.comments,
                         self.added_on,
                         self.full_info_url,
@@ -457,10 +496,8 @@ class AdmissionResult:
                         self.decision_date,
                         self.season,
                         self.year,
-
                         # Redundant but the assignment calls for it
                         f"{self.season} {self.year}",
-
                         self.school_region,
                         self.gpa,
                         self.gre_general,
@@ -477,10 +514,10 @@ class AdmissionResult:
 
 
 def _json_encoder(obj):
-    """Cleanly serializes the types in this module to a JSON-friendly format."""
+    """Serialize the types in this module to a JSON-friendly format."""
     if isinstance(obj, Enum):
         return obj.value
-    
+
     elif isinstance(obj, set):
         return sorted(list(obj))
 
@@ -495,5 +532,6 @@ def _json_encoder(obj):
 
 @atexit.register
 def gracefully_close():
+    """Close the database connection when the program exits."""
     if conn:
         conn.close()
