@@ -226,15 +226,7 @@ class AdmissionResult:
 
     @classmethod
     def count(cls, where={}):
-        """Return the count of all admission results in the database.
-
-        Args:
-            where (dict): Optional dictionary for filtering the count.
-
-        Returns:
-            int: The total count of entries matching the criteria.
-
-        """
+        """Return the count of all admission results in the database."""
         where_clause, params = _build_where_clause(where)
 
         with conn.cursor() as cur:
