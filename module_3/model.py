@@ -156,20 +156,38 @@ class DecisionStatus(Enum):
     OTHER = "other"
 
 
-def _decision_from_soup(decision_str: str, year: int):
+def _decision_from_soup(decision_str: str, added_on_year: int):
     """Parse a decision string and returns the status and date."""
     match = re.match(
-        r"(?P<status>[A-Za-z\s]+?)\s+on\s+(?P<date_str>[0-9A-Za-z\s]+)$",
+        r"(?P<status>[A-Za-z\s]+?)\s+on\s+(?P<date_str>[0-9]+\s+[A-Za-z]+)$",
         decision_str,
     )
+
     if not match:
         print(f"Failed to parse decision: {decision_str}")
         return None, None
 
     status = DecisionStatus(match.group("status").lower().replace(" ", "_"))
+    date_part = match.group("date_str")
+    
+    # Try to parse with the date it was added with
+    try:
+        parsed_date = datetime.strptime(f"{date_part} {added_on_year}", "%d %b %Y")
+    except ValueError:
+        print(f"Failed to parse date string: {date_part}")
+        return status, None
 
-    full_date = match.group("date_str") + f", {year}"
-    date = datetime.strptime(full_date, "%d %b, %Y")
+    today = datetime.now()
+
+    # Check if the parsed date is in the future
+    if parsed_date > today:
+        # If it is, subtract one year
+        year = today.year - 1
+    else:
+        # Otherwise, use the current year
+        year = today.year
+
+    date = parsed_date.replace(year=year)
 
     return status, date
 
@@ -342,7 +360,8 @@ class AdmissionResult:
 
         # Process decision values from the appropriate table column.
         try:
-            decision_year = tags["year"] or (added_on.year if added_on else datetime.now().year)
+            # Do the best we can finding which year to use as the date for the decision.
+            decision_year = (added_on.year if added_on else tags["year"]) or datetime.now().year
 
             decision_status, decision_date = _decision_from_soup(decision, decision_year)
         except ValueError:
