@@ -98,7 +98,7 @@ def scrape_data(page: int, limit: int | None = None, stop_at_id: int | None = No
 
     try:
         # Start with the first page and iterate up to the limit or no more pages.
-        while more_pages and not (limit and pages_crawled >= limit):
+        while more_pages and not (limit and len(admission_results) >= limit):
             page_number = page + pages_crawled
 
             print(f"Scraping page #{page_number}")

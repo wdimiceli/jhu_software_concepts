@@ -14,6 +14,8 @@ from enum import Enum
 
 from bs4.element import Tag
 
+from llm_hosting.app import _call_llm
+
 
 # Global connection object to the PostgreSQL database.
 conn = psycopg.connect(
@@ -551,6 +553,13 @@ class AdmissionResult:
         except Exception as e:
             print(f"Failed to save entry with id {self.id}")
             raise e
+        
+    def clean_and_augment(self):
+        """Process the school and program and apply cleaned fields."""
+        result = _call_llm(f"{self.program_name}, {self.school}")
+
+        self.llm_generated_program = result["standardized_program"]
+        self.llm_generated_university = result["standardized_university"]
 
 
 def _json_encoder(obj):
