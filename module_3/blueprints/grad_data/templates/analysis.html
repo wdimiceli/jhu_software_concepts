@@ -1,13 +1,63 @@
 {% extends "base.html" %}
 
 {% block main %}
-  <h1>Analysis</h1>
+  <h1 style="margin-bottom:52px">Analysis ({{ refresh }})</h1>
 
-  <section>
+  <section class="controls">
+    <div class="control">
+      {% if scrape_is_running %}
+        <div class="loader" style="margin-right:12px"></div>
+      {% endif %}
+
+      Fetch new data from TheGradCafe:
+      <button
+        {% if scrape_is_running %}
+          hx-get=""
+          disabled
+          {% else %}
+          hx-post=""
+        {% endif %}
+
+        hx-target="main"
+        hx-select="main"
+        hx-swap="outerHTML"
+        hx-trigger="{{ 'load delay:1s' if scrape_is_running else '' }}"
+      >
+        Pull Data
+      </button>
+    </div>
+
+    <div class="control">
+      {% if refresh %}
+        <svg viewBox="0 0 64 64" style="
+          width: 32px;
+          margin: 0 12px;
+        ">
+          <path d="M32,2C15.431,2,2,15.432,2,32c0,16.568,13.432,30,30,30c16.568,0,30-13.432,30-30C62,15.432,48.568,2,32,2z M25.025,50  l-0.02-0.02L24.988,50L11,35.6l7.029-7.164l6.977,7.184l21-21.619L53,21.199L25.025,50z" fill="#43a047"></path>
+        </svg>
+      {% endif %}
+
+      Refresh analysis results:
+
+      <button
+        {% if scrape_is_running %}
+          disabled
+        {% endif %}
+        hx-get="?refresh"
+        hx-target="main"
+        hx-select="main"
+        hx-swap="outerHTML"
+      >
+        Update Analysis
+      </button>
+    </div>
+  </section>
+
+  <section id="question-listing" class="question-listing">
     {% for qa in questions %}
-      <div>
-        <h2>{{ qa["prompt"] }} </h2>
-        <p>{{ qa["answer"] }} </p>
+      <div class="question-entry">
+        <h2><strong>Q:</strong> &ldquo;<i>{{ qa["prompt"] }}</i>&rdquo;</h2>
+        <p><strong>A:</strong> {{ qa["formatted"] }} </p>
       </div>
     {% endfor %}
   </section>

@@ -8,7 +8,7 @@ table_name = "admissions_info"
 
 def answer_questions():
     """Return a list of questions and their corresponding SQL-based answers."""
-    return [
+    queries = [
         {
             "prompt":
                 "How many entries do you have in your database who have applied for Fall 2025?",
@@ -20,6 +20,8 @@ def answer_questions():
             """,
                 (2025, "fall"),
             )[0]["count"],
+
+            "formatted": lambda result: f"Applicant count: {str(result)}",
         },
 
         {
@@ -39,6 +41,8 @@ def answer_questions():
             """,
                 ["international"],
             )[0]["pct"],
+
+            "formatted": lambda result: f"Percent international: {result:.2f}%",
         },
 
         {
@@ -57,11 +61,18 @@ def answer_questions():
             """,
                 [],
             )[0],
+
+            "formatted": lambda result: ', '.join([
+                f"GPA: {result["avg_gpa"]:.2f}",
+                f"GRE: {result["avg_gre"]:.2f}",
+                f"GRE Verbal: {result["avg_gre_v"]:.2f}",
+                f"GRE AW: {result["avg_gre_aw"]:.2f}",
+            ]),
         },
 
         {
             "prompt":
-                "What is their average GPA of American students in Fall 2025?",
+                "What is the average GPA of American students in Fall 2025?",
 
             "answer": AdmissionResult.execute_raw(
                 f"""
@@ -72,6 +83,8 @@ def answer_questions():
             """,
                 [2025, "fall"],
             )[0]["avg_gpa"],
+
+            "formatted": lambda result: f"Average GPA: {result:.2f}",
         },
 
         {
@@ -92,6 +105,8 @@ def answer_questions():
             """,
                 ["accepted", 2025, "fall"],
             )[0]["pct"],
+
+            "formatted": lambda result: f"Percent accepted: {result:.2f}%",
         },
 
         {
@@ -108,6 +123,8 @@ def answer_questions():
             """,
                 ["accepted", 2025, "fall"],
             )[0]["avg_gpa"],
+
+            "formatted": lambda result: f"Average GPA: {result:.2f}",
         },
 
         {
@@ -124,6 +141,8 @@ def answer_questions():
             """,
                 ["masters", "Johns Hopkins University", "Computer Science"],
             )[0]["count"],
+
+            "formatted": lambda result: f"Applicant count: {str(result)}",
         },
 
         {
@@ -145,5 +164,12 @@ def answer_questions():
             """,
                 ["phd", "George Town University", "Computer Science", 2025, "accepted"],
             )[0]["count"],
+
+            "formatted": lambda result: f"Applicant count: {str(result)}",
         },
     ]
+
+    for question in queries:
+        question["formatted"] = question["formatted"](question["answer"])
+
+    return queries

@@ -8,7 +8,6 @@ The main components:
 - `scrape_page`: A helper function that handles the scraping of a single page.
 """
 
-import argparse
 import re
 from itertools import pairwise
 from urllib.parse import ParseResult as ParsedURL
@@ -117,35 +116,3 @@ def scrape_data(page: int, limit: int):
         print("Error during scrape: ", e)
 
     return admission_results
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Scraper for TheGradCafe.")
-
-    parser.add_argument(
-        "--out",
-        type=str,
-        required=False,
-        help="The output filename to save results to.",
-        default="applicant_data.json",
-    )
-
-    parser.add_argument(
-        "--page",
-        type=int,
-        required=False,
-        help="The page on which start crawling.",
-        default=1,
-    )
-
-    parser.add_argument(
-        "--limit",
-        type=int,
-        required=False,
-        help="The maximum number of pages to crawl.",
-    )
-
-    args = parser.parse_args()
-
-    admission_results = scrape_data(args.page, args.limit)
-    # save_scrape_results(admission_results, args.out)
