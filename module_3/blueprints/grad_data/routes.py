@@ -9,6 +9,7 @@ import threading
 from flask import Blueprint, render_template, request
 from query_data import answer_questions
 from scrape import scrape_data
+from model import AdmissionResult
 
 
 blueprint_name = "grad_data"
@@ -26,12 +27,20 @@ scrape_is_running = False # global flag
 
 
 def begin_refresh():
+    """Scrape new data and save to the database."""
     global scrape_is_running
 
     scrape_is_running = True
 
     try:
-        scrape_data(1, 10)
+        latest_id = AdmissionResult.get_latest_id()
+        print(f"Latest id: {latest_id}")
+
+        entries = scrape_data(1, stop_at_id=latest_id)
+
+        for entry in entries:
+            entry.save_to_db()
+
     finally:
         scrape_is_running = False
 

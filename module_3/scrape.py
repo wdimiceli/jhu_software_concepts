@@ -89,7 +89,7 @@ def scrape_page(page: int):
         return admission_results, has_more_pages
 
 
-def scrape_data(page: int, limit: int):
+def scrape_data(page: int, limit: int | None = None, stop_at_id: int | None = None):
     """Scrape iteratively from TheGradCafe, starting with the given page, up to the maximum."""
     pages_crawled = 0
     more_pages = True
@@ -109,6 +109,10 @@ def scrape_data(page: int, limit: int):
             print(f"Success... found {len(page_results)} items; total = {len(admission_results)}")
 
             pages_crawled += 1
+
+            if stop_at_id in [entry.id for entry in page_results]:
+                print(f"Found id {stop_at_id} in results, stopping...")
+                more_pages = False
 
         print(f"Got {len(admission_results)} results")
     except Exception as e:
