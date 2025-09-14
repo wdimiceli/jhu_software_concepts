@@ -332,6 +332,12 @@ class AdmissionResult:
             llm_generated_university,
         ) = row
 
+        # Wrap strings into enums
+        decision_status = DecisionStatus(decision_status) if decision_status else None
+        applicant_region = ApplicantRegion(applicant_region) if applicant_region else None
+        degree_type = DegreeType(degree_type) if degree_type else None
+        season = SchoolSeason(season) if season else None
+
         return AdmissionResult(
             id=id,
             school=school,
