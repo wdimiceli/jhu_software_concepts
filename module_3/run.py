@@ -4,6 +4,8 @@ from flask import Flask
 from blueprints.portfolio.routes import bp as portfolio
 from blueprints.grad_data.routes import bp as grad_data
 
+from postgres_manager import start_postgres
+
 # Create the main Flask application instance.
 root_app = Flask(__name__)
 
@@ -17,4 +19,5 @@ root_app.register_blueprint(grad_data, url_prefix="/grad-data")
 
 if __name__ == "__main__":
     """Start up the development server."""
-    root_app.run(host='0.0.0.0', port=8080, debug=True)
+    start_postgres()
+    root_app.run(host='0.0.0.0', port=8080)

@@ -5,7 +5,8 @@ This module provides functionality to load scraped admissions data into a Postgr
 
 import argparse
 import json
-from model import AdmissionResult, init_tables, conn
+from model import AdmissionResult, init_tables
+from postgres_manager import get_connection
 
 
 def load_admissions_results(recreate=False):
@@ -21,7 +22,7 @@ def load_admissions_results(recreate=False):
         for entry in entries:
             AdmissionResult.from_dict(entry).save_to_db()
 
-        conn.commit()
+        get_connection().commit()
 
         count = AdmissionResult.count()
 

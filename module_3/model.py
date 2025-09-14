@@ -5,29 +5,20 @@ The `AdmissionResult` class serves as the primary model for an admissions record
 
 import psycopg
 import psycopg.rows
-import atexit
 import re
 import json
 from datetime import datetime
 from dataclasses import asdict, dataclass, is_dataclass
-
 from bs4.element import Tag
 
 from llm_hosting.app import _call_llm
-
-
-# Global connection object to the PostgreSQL database.
-conn = psycopg.connect(
-    dbname="admissions",
-    user="student",
-    password="modernsoftwareconcepts",
-    host="localhost",
-    port=5432,
-)
+from postgres_manager import get_connection
 
 
 def init_tables(recreate=False):
     """Initialize the postgres tables for storing the admissions scrape data."""
+    conn = get_connection()
+
     with conn.cursor() as cur:
         if recreate:
             print("Dropping tables and recreating...")
@@ -87,10 +78,9 @@ def _tags_from_soup(tags: set[str]):
 
         # -------- Process region --------
 
-        if tag in ['international', 'american']:
+        if tag in ["international", "american"]:
             expanded["applicant_region"] = tag
             continue
-
 
         # -------- Process grades --------
 
@@ -119,7 +109,7 @@ def _tags_from_soup(tags: set[str]):
         if term_match:
             season = term_match.group("season")
 
-            for season_category in ['fall', 'winter', 'spring', 'summer']:
+            for season_category in ["fall", "winter", "spring", "summer"]:
                 if season_category.startswith(season):
                     expanded["season"] = season
                     break
@@ -147,7 +137,7 @@ def _decision_from_soup(decision_str: str, added_on_year: int):
 
     status = match.group("status").lower().replace(" ", "_")
     date_part = match.group("date_str")
-    
+
     # Try to parse with the date it was added with
     try:
         parsed_date = datetime.strptime(f"{date_part} {added_on_year}", "%d %b %Y")
@@ -216,7 +206,7 @@ class AdmissionResult:
         """Return the count of all admission results in the database."""
         where_clause, params = _build_where_clause(where)
 
-        with conn.cursor() as cur:
+        with get_connection().cursor() as cur:
             cur.execute(
                 f"""
                 SELECT COUNT(*) from admissions_info {where_clause};
@@ -233,7 +223,7 @@ class AdmissionResult:
 
         params.extend([offset, limit])
 
-        with conn.cursor() as cur:
+        with get_connection().cursor() as cur:
             cur.execute(
                 f"""
                 SELECT * from admissions_info
@@ -249,17 +239,16 @@ class AdmissionResult:
                 "total": cls.count(where),
             }
 
-
     @classmethod
     def execute_raw(cls, query, params):
         """Execute a raw SQL query and returns the results as a list of dictionaries."""
-        with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
+        with get_connection().cursor(row_factory=psycopg.rows.dict_row) as cur:
             return cur.execute(query, params).fetchall()
-        
+
     @classmethod
     def get_latest_id(cls):
         """Retrieve the highest existing admission ID from the database."""
-        with conn.cursor() as cur:
+        with get_connection().cursor() as cur:
             cur.execute("""
                 SELECT MAX(p_id) FROM admissions_info;
             """)
@@ -439,6 +428,8 @@ class AdmissionResult:
 
     def save_to_db(self):
         """Save the AdmissionResult instance to the database."""
+        conn = get_connection()
+
         try:
             with conn.cursor() as cur:
                 cur.execute(
@@ -503,7 +494,7 @@ class AdmissionResult:
         except Exception as e:
             print(f"Failed to save entry with id {self.id}")
             raise e
-        
+
     def clean_and_augment(self):
         """Process the school and program and apply cleaned fields."""
         program_and_school = f"{self.program_name}, {self.school}"
@@ -530,10 +521,3 @@ def _json_encoder(obj):
         return asdict(obj)  # type: ignore
 
     raise TypeError(f"Cannot serialize object of type {type(obj)}")
-
-
-@atexit.register
-def gracefully_close():
-    """Close the database connection when the program exits."""
-    if conn:
-        conn.close()
