@@ -227,7 +227,7 @@ def _build_where_clause(where={}):
 class AdmissionResult:
     """Represents a single entry from TheGradCafe."""
 
-    id: str
+    id: int
     school: str
     program_name: str | None
     degree_type: DegreeType | None
@@ -421,7 +421,7 @@ class AdmissionResult:
         if id_match is None:
             raise RuntimeError("anchor href for admission result is unrecognized")
 
-        id: str = id_match.group("id")
+        id: int = int(id_match.group("id"))
 
         return AdmissionResult(
             id=id,
