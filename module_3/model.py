@@ -62,6 +62,8 @@ def init_tables(recreate=False):
             );
         """)
 
+        conn.commit()
+
 
 class ApplicantRegion(Enum):
     """Enumeration for the geographical region of an applicant."""
