@@ -6,16 +6,20 @@ This module provides functionality to load scraped admissions data into a Postgr
 import argparse
 import json
 from model import AdmissionResult, init_tables
-from postgres_manager import get_connection
+from postgres_manager import start_postgres, get_connection
 
 
-def load_admissions_results(recreate=False):
+def load_admissions_results(filename: str, recreate=False):
     """Read admissions data from disk and loads it into the database."""
     init_tables(recreate)
 
+    print("Beginning data ingestion...")
+
     # Read the data from the specified JSON file
-    with open("admissions_info.json", "r") as f:
+    with open(filename, "r") as f:
         entries = json.load(f)
+
+    print(f"Read {len(entries)} from JSON file {filename} ...")
 
     try:
         # Save each entry to the database
@@ -39,6 +43,14 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "--json-file",
+        type=str,
+        required=False,
+        help="JSON filename with data to read from.",
+        default="admissions_info.json",
+    )
+
+    parser.add_argument(
         "--recreate-tables",
         type=bool,
         required=False,
@@ -47,5 +59,7 @@ if __name__ == "__main__":
     )
 
     args = parser.parse_args()
+
+    start_postgres()
 
     load_admissions_results(args.recreate_tables)
