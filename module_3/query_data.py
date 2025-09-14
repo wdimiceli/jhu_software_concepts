@@ -79,7 +79,7 @@ def answer_questions():
                 SELECT
                     AVG(gpa) as avg_gpa
                 FROM {table_name}
-                WHERE year=%s AND season=%s;;
+                WHERE year=%s AND season=%s;
             """,
                 [2025, "fall"],
             )[0]["avg_gpa"],
