@@ -1,18 +1,28 @@
-import re
+"""A web scraper for TheGradCafe.com, designed to extract and parse admissions data.
+
+This module provides functions to crawl the "Admissions Results" section of TheGradCafe.com.
+
+The main components:
+
+- `scrape_data`: The primary function that orchestrates the scraping process.
+- `scrape_page`: A helper function that handles the scraping of a single page.
+"""
+
 import argparse
+import re
 from itertools import pairwise
+from urllib.parse import ParseResult as ParsedURL
+from urllib.parse import urlparse
+from urllib.request import Request, urlopen
+from urllib.robotparser import RobotFileParser
 
 from bs4 import BeautifulSoup
 from bs4.element import Tag
-from urllib.request import urlopen, Request
-from urllib.parse import urlparse, ParseResult as ParsedURL
-from urllib.robotparser import RobotFileParser
-
 from model import AdmissionResult
 
 
 def _check_robots_permission(url: ParsedURL, user_agent: str) -> bool:
-    """Checks that the given user agent has permission to crawl the URL."""
+    """Check that the given user agent has permission to crawl the URL."""
     robots_file_parser = RobotFileParser()
 
     robots_file_parser.set_url(f"https://{url.hostname}/robots.txt")
@@ -22,7 +32,7 @@ def _check_robots_permission(url: ParsedURL, user_agent: str) -> bool:
 
 
 def _get_table_rows(soup: BeautifulSoup):
-    """Parses the HTML soup and returns a list of table entries corresponding to admission results."""
+    """Parse HTML soup and return a list of table entries corresponding to admission results."""
     # Skip down to the first h1, which gets us roughly over the target.
     h1 = soup.find("h1")
     tbody = h1 and h1.find_next("tbody")
@@ -35,26 +45,25 @@ def _get_table_rows(soup: BeautifulSoup):
     # Each admission result consumes 1 or more table rows in the HTML.
     # Here we group them
     split_indices = [
-        index
-        for (index, row) in enumerate(rows)
-        if not row.find("td", attrs={"colspan": True})
+        index for (index, row) in enumerate(rows) if not row.find("td", attrs={"colspan": True})
     ]
 
     return [rows[i:j] for i, j in pairwise(split_indices)]
 
 
 def scrape_page(page: int):
-    """Scrapes a single page on TheGradCafe.com"""
+    """Scrape a single page on TheGradCafe.com."""
     assert page > 0  # Sanity check
 
     user_agent = "WesBot/1.0"
+    # Construct the URL for the specific page
     url = urlparse("https://www.thegradcafe.com/survey/?page=" + str(page))
     request = Request(url.geturl(), headers={"User-Agent": user_agent})
 
     # Check to ensure we have permission before continuing.
     if not _check_robots_permission(url, user_agent):
         raise Exception(
-            f"robots.txt permission check failed with user agent [{user_agent}] and url: [{str(url)}]"
+            f"robots.txt permission check failed with user agent [{user_agent}] and url: [{url!s}]",
         )
 
     # Get the HTML response and process it with BS.
@@ -62,6 +71,7 @@ def scrape_page(page: int):
         html = response.read().decode("utf-8")
         soup = BeautifulSoup(html, "html.parser")
 
+        # Parse each group of rows into an AdmissionResult object
         admission_results: list[AdmissionResult] = [
             AdmissionResult.from_soup(row) for row in _get_table_rows(soup)
         ]
@@ -81,7 +91,7 @@ def scrape_page(page: int):
 
 
 def scrape_data(page: int, limit: int):
-    """Iteratively scrapes data from TheGradCafe, starting with the given page, up to the maximum"""
+    """Scrape iteratively from TheGradCafe, starting with the given page, up to the maximum."""
     pages_crawled = 0
     more_pages = True
 
@@ -107,25 +117,6 @@ def scrape_data(page: int, limit: int):
         print("Error during scrape: ", e)
 
     return admission_results
-
-
-def generate_admissions_metadata(admission_results: list[AdmissionResult]):
-    """Computes a set of metadata about the scrape data, giving totals and de-duped values."""
-    schools = set(map(lambda result: result.school, admission_results))
-    programs = set(map(lambda result: result.program_name, admission_results))
-
-    return {
-        "total": len(admission_results),
-        "schools": schools,
-        "programs": programs,
-    }
-
-
-# def load_scrape_results(filename: str) -> list[AdmissionResult]:
-#     """Loads the scrape data from the given filename and deserializes it."""
-#     with open(filename, "r") as f:
-#         serialized = json.load(f)
-#         return list(map(AdmissionResult.from_json, serialized))
 
 
 if __name__ == "__main__":
