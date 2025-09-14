@@ -104,15 +104,17 @@ def scrape_data(page: int, limit: int | None = None, stop_at_id: int | None = No
             print(f"Scraping page #{page_number}")
 
             page_results, more_pages = scrape_page(page_number)
-            admission_results.extend(page_results)
 
-            print(f"Success... found {len(page_results)} items; total = {len(admission_results)}")
+            print(f"Success... found {len(page_results)} items")
 
             pages_crawled += 1
 
             if stop_at_id in [entry.id for entry in page_results]:
                 print(f"Found id {stop_at_id} in results, stopping...")
+                page_results = filter(lambda result: result.id > stop_at_id, page_results)
                 more_pages = False
+
+            admission_results.extend(page_results)
 
         print(f"Got {len(admission_results)} results")
     except Exception as e:

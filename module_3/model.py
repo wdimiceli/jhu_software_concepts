@@ -550,13 +550,21 @@ class AdmissionResult:
                         self.llm_generated_university,
                     ),
                 )
+
+            conn.commit()
         except Exception as e:
             print(f"Failed to save entry with id {self.id}")
             raise e
         
     def clean_and_augment(self):
         """Process the school and program and apply cleaned fields."""
-        result = _call_llm(f"{self.program_name}, {self.school}")
+        program_and_school = f"{self.program_name}, {self.school}"
+
+        print(f"Running cleaner on entry {self.id}: {program_and_school}")
+
+        result = _call_llm(program_and_school)
+
+        print(f"Got cleaned fields: {result}")
 
         self.llm_generated_program = result["standardized_program"]
         self.llm_generated_university = result["standardized_university"]
