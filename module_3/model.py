@@ -88,7 +88,7 @@ def _tags_from_soup(tags: set[str]):
     expanded = {
         "season": None,
         "year": None,
-        "school_region": False,
+        "applicant_region": False,
         "gre_general": None,
         "gre_verbal": None,
         "gre_analytical_writing": None,
@@ -101,7 +101,7 @@ def _tags_from_soup(tags: set[str]):
         # -------- Process region --------
 
         if tag in [r.value for r in ApplicantRegion]:
-            expanded["school_region"] = ApplicantRegion(tag)
+            expanded["applicant_region"] = ApplicantRegion(tag)
             continue
 
         # -------- Process term --------
@@ -234,7 +234,7 @@ class AdmissionResult:
     decision_date: datetime | None
     season: SchoolSeason | None
     year: int | None
-    school_region: ApplicantRegion | None
+    applicant_region: ApplicantRegion | None
     gre_general: int | None
     gre_verbal: int | None
     gre_analytical_writing: float | None
@@ -320,7 +320,7 @@ class AdmissionResult:
             season,
             year,
             _term,
-            school_region,
+            applicant_region,
             gpa,
             gre_general,
             gre_verbal,
@@ -340,7 +340,7 @@ class AdmissionResult:
             decision_date=decision_date,
             season=season,
             year=year,
-            school_region=school_region,
+            applicant_region=applicant_region,
             gre_general=gre_general,
             gre_verbal=gre_verbal,
             gre_analytical_writing=gre_analytical_writing,
@@ -431,7 +431,7 @@ class AdmissionResult:
             decision_date=decision_date,
             season=tags["season"],
             year=tags["year"],
-            school_region=tags["school_region"],
+            applicant_region=tags["applicant_region"],
             gre_general=tags["gre_general"],
             gre_verbal=tags["gre_verbal"],
             gre_analytical_writing=tags["gre_analytical_writing"],
@@ -524,18 +524,18 @@ class AdmissionResult:
                         self.comments,
                         self.added_on,
                         self.full_info_url,
-                        self.decision_status,
+                        self.decision_status.value if self.decision_status else None,
                         self.decision_date,
-                        self.season,
+                        self.season.value if self.season else None,
                         self.year,
                         # Redundant but the assignment calls for it
                         f"{self.season} {self.year}",
-                        self.school_region,
+                        self.applicant_region.value if self.applicant_region else None,
                         self.gpa,
                         self.gre_general,
                         self.gre_verbal,
                         self.gre_analytical_writing,
-                        self.degree_type,
+                        self.degree_type.value if self.degree_type else None,
                         self.llm_generated_program,
                         self.llm_generated_university,
                     ),
