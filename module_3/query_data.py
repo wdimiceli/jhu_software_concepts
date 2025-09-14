@@ -1,3 +1,5 @@
+"""A collection of predefined database queries for the admissions data."""
+
 from model import AdmissionResult
 
 
@@ -5,18 +7,27 @@ table_name = "admissions_info"
 
 
 def answer_questions():
+    """Return a list of questions and their corresponding SQL-based answers."""
     return [
         {
-            "prompt": "How many entries do you have in your database who have applied for Fall 2025?",
-            "answer": AdmissionResult.execute_raw(f"""
+            "prompt":
+                "How many entries do you have in your database who have applied for Fall 2025?",
+
+            "answer": AdmissionResult.execute_raw(
+                f"""
                 SELECT COUNT(*) as count FROM {table_name}
                 WHERE year=%s AND season=%s;
             """,
-            (2025, "fall"))[0]["count"],
+                (2025, "fall"),
+            )[0]["count"],
         },
+
         {
-           "prompt": "What percentage of entries are from international students (not American or Other) (to two decimal places)?",
-           "answer": AdmissionResult.execute_raw(f"""
+            "prompt":
+                "What percentage of entries are from international students?",
+
+            "answer": AdmissionResult.execute_raw(
+                f"""
                 SELECT
                     intl_student_count * 100.0 / total as pct
                 FROM (
@@ -26,11 +37,17 @@ def answer_questions():
                     FROM {table_name}
                 );
             """,
-            ["international"])[0]["pct"],
+                ["international"],
+            )[0]["pct"],
         },
+
         {
-           "prompt": "What is the average GPA, GRE, GRE V, GRE AW of applicants who provide these metrics?",
-           "answer": AdmissionResult.execute_raw(f"""
+            "prompt":
+                """What is the average GPA, GRE, GRE V, GRE AW of applicants who provide these
+                   metrics?""",
+
+            "answer": AdmissionResult.execute_raw(
+                f"""
                 SELECT
                     AVG(gpa) as avg_gpa,
                     AVG(gre) as avg_gre,
@@ -38,21 +55,31 @@ def answer_questions():
                     AVG(gre_aw) as avg_gre_aw
                 FROM {table_name};
             """,
-            [])[0],
+                [],
+            )[0],
         },
+
         {
-            "prompt": "What is their average GPA of American students in Fall 2025?",
-            "answer": AdmissionResult.execute_raw(f"""
+            "prompt":
+                "What is their average GPA of American students in Fall 2025?",
+
+            "answer": AdmissionResult.execute_raw(
+                f"""
                 SELECT
                     AVG(gpa) as avg_gpa
                 FROM {table_name}
                 WHERE year=%s AND season=%s;;
             """,
-            [2025, "fall"])[0]["avg_gpa"],
+                [2025, "fall"],
+            )[0]["avg_gpa"],
         },
+
         {
-            "prompt": "What percent of entries for Fall 2025 are Acceptances (to two decimal places)?",
-            "answer": AdmissionResult.execute_raw(f"""
+            "prompt":
+                "What percent of entries for Fall 2025 are Acceptances?",
+
+            "answer": AdmissionResult.execute_raw(
+                f"""
                 SELECT
                     accepted * 100.0 / total as pct
                 FROM (
@@ -63,31 +90,49 @@ def answer_questions():
                     WHERE year=%s AND season=%s
                 );
             """,
-            ["accepted", 2025, "fall"])[0]["pct"],
+                ["accepted", 2025, "fall"],
+            )[0]["pct"],
         },
+
         {
-            "prompt": "What is the average GPA of applicants who applied for Fall 2025 who are Acceptances?",
-            "answer": AdmissionResult.execute_raw(f"""
+            "prompt":
+                """What is the average GPA of applicants who applied for Fall 2025 who are
+                   Acceptances?""",
+
+            "answer": AdmissionResult.execute_raw(
+                f"""
                 SELECT
                     AVG(gpa) as avg_gpa
                 FROM {table_name}
                 WHERE status=%s AND year=%s AND season=%s;
             """,
-            ["accepted", 2025, "fall"])[0]["avg_gpa"],
+                ["accepted", 2025, "fall"],
+            )[0]["avg_gpa"],
         },
+
         {
-            "prompt": "How many entries are from applicants who applied to JHU for a masters degrees in Computer Science?",
-            "answer": AdmissionResult.execute_raw(f"""
+            "prompt":
+                """How many entries are from applicants who applied to JHU for a masters degrees in
+                   Computer Science?""",
+
+            "answer": AdmissionResult.execute_raw(
+                f"""
                 SELECT
                     COUNT(*)
                 FROM {table_name}
                 WHERE degree=%s AND llm_generated_university=%s and llm_generated_program=%s;
             """,
-            ["masters", "Johns Hopkins University", "Computer Science"])[0]["count"],
+                ["masters", "Johns Hopkins University", "Computer Science"],
+            )[0]["count"],
         },
+
         {
-            "prompt": "How many entries from 2025 are acceptances from applicants who applied to Georgetown University for a PhD in Computer Science?",
-            "answer": AdmissionResult.execute_raw(f"""
+            "prompt":
+                """How many entries from 2025 are acceptances from applicants who applied to
+                   Georgetown University for a PhD in Computer Science?""",
+
+            "answer": AdmissionResult.execute_raw(
+                f"""
                 SELECT
                     COUNT(*)
                 FROM {table_name}
@@ -98,6 +143,7 @@ def answer_questions():
                     AND year=%s
                     AND status=%s;
             """,
-            ["phd", "George Town University", "Computer Science", 2025, "accepted"])[0]["count"],
+                ["phd", "George Town University", "Computer Science", 2025, "accepted"],
+            )[0]["count"],
         },
     ]
