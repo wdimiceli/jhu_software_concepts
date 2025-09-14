@@ -106,23 +106,6 @@ def _tags_from_soup(tags: set[str]):
             expanded["applicant_region"] = ApplicantRegion(tag)
             continue
 
-        # -------- Process term --------
-
-        term_match = re.match(r"(?P<season>[a-z]+)\s*?(?P<year>\d{4}|\d{2})", tag)
-        if term_match:
-            season = term_match.group("season")
-
-            for season_category in SchoolSeason:
-                if season_category.value.startswith(season):
-                    expanded["season"] = SchoolSeason(season)
-                    break
-
-            year = term_match.group("year")
-
-            year = ("20" + year)[-4:]
-            expanded["year"] = int(year)
-
-            continue
 
         # -------- Process grades --------
 
@@ -142,6 +125,24 @@ def _tags_from_soup(tags: set[str]):
 
             elif test == "gre aw":
                 expanded["gre_analytical_writing"] = float(score)
+
+            continue
+
+        # -------- Process term --------
+
+        term_match = re.match(r"(?P<season>[a-z]+)\s*?(?P<year>\d{4}|\d{2})", tag)
+        if term_match:
+            season = term_match.group("season")
+
+            for season_category in SchoolSeason:
+                if season_category.value.startswith(season):
+                    expanded["season"] = SchoolSeason(season)
+                    break
+
+            year = term_match.group("year")
+
+            year = ("20" + year)[-4:]
+            expanded["year"] = int(year)
 
             continue
 
