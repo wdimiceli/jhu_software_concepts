@@ -284,6 +284,21 @@ class AdmissionResult:
         """Execute a raw SQL query and returns the results as a list of dictionaries."""
         with conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
             return cur.execute(query, params).fetchall()
+        
+    @classmethod
+    def get_latest_id(cls):
+        """Retrieve the highest existing admission ID from the database."""
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT MAX(p_id) FROM admissions_info;
+            """)
+
+            result = cur.fetchone()
+
+            if result:
+                return result[0]
+
+            return 0
 
     @classmethod
     def _from_db_row(cls, row):
