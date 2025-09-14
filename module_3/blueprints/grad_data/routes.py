@@ -41,7 +41,7 @@ def begin_refresh():
         entries = scrape_data(1, 30000, latest_id)
 
         for entry in entries:
-            # entry.clean_and_augment()
+            entry.clean_and_augment()
             entry.save_to_db()
 
         scrape_state = {
