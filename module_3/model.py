@@ -39,7 +39,7 @@ def init_tables(recreate=False):
 
         cur.execute("""
             CREATE TABLE IF NOT EXISTS admissions_info (
-                p_id SERIAL PRIMARY KEY,
+                p_id INTEGER PRIMARY KEY,
                 school TEXT,
                 program_name TEXT,
                 program TEXT,
