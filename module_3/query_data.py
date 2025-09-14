@@ -167,6 +167,56 @@ def answer_questions():
 
             "formatted": lambda result: f"Applicant count: {str(result)}",
         },
+
+        {
+            "prompt":
+                """What is the average GPA for students accepted to UCLA vs USC?""",
+
+            "answer": AdmissionResult.execute_raw(
+                f"""
+                SELECT
+                    AVG(gpa) FILTER (WHERE llm_generated_university=%s) as avg_gpa_ucla,
+                    AVG(gpa) FILTER (WHERE llm_generated_university=%s) as avg_gpa_usc
+                FROM {table_name}
+                WHERE
+                    status=%s;
+            """,
+                [
+                    "University of California, Los Angeles (Ucla)",
+                    "University of Southern California",
+                    "accepted"
+                ],
+            )[0],
+
+            "formatted": lambda result: ', '.join([
+                f"UCLA average GPA: {result["avg_gpa_ucla"]:.2f}",
+                f"USC average GPA: {result["avg_gpa_usc"]:.2f}",
+            ]),
+        },
+
+        {
+            "prompt":
+                """What is the average GRE for students in the past 4 years?""",
+
+            "answer": AdmissionResult.execute_raw(
+                f"""
+                SELECT
+                    AVG(gre) FILTER (WHERE year=%s) as avg_gre_2021,
+                    AVG(gre) FILTER (WHERE year=%s) as avg_gre_2022,
+                    AVG(gre) FILTER (WHERE year=%s) as avg_gre_2023,
+                    AVG(gre) FILTER (WHERE year=%s) as avg_gre_2024
+                FROM {table_name};
+            """,
+                [2021, 2022, 2023, 2024],
+            )[0],
+
+            "formatted": lambda result: ', '.join([
+                f"2021 average GRE: {result["avg_gre_2021"]:.2f}",
+                f"2022 average GRE: {result["avg_gre_2022"]:.2f}",
+                f"2023 average GRE: {result["avg_gre_2023"]:.2f}",
+                f"2024 average GRE: {result["avg_gre_2024"]:.2f}",
+            ]),
+        },
     ]
 
     for question in queries:
