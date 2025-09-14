@@ -3,8 +3,8 @@
 {% block main %}
   <h1 style="margin-bottom:52px">Analysis</h1>
 
-  <section class="controls">
-    <div id="refresh-control" class="control">
+  <section id="controls" class="controls">
+    <div class="control">
       {% if scrape_is_running %}
         <div class="loader" style="margin-right:12px"></div>
       {% endif %}
@@ -18,8 +18,8 @@
           hx-post=""
         {% endif %}
 
-        hx-target="#refresh-control"
-        hx-select="#refresh-control"
+        hx-target="#controls"
+        hx-select="#controls"
         hx-swap="outerHTML"
         hx-trigger="{{ 'load delay:1s' if scrape_is_running else '' }}"
       >
