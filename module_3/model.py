@@ -100,7 +100,7 @@ def _tags_from_soup(tags: set[str]):
 
         # -------- Process region --------
 
-        if tag in ApplicantRegion:
+        if tag in [r.value for r in ApplicantRegion]:
             expanded["school_region"] = ApplicantRegion(tag)
             continue
 
