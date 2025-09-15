@@ -22,7 +22,9 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Then, execute the `scrape.py` script:
+## Running the scraper:
+
+Execute the `scrape.py` script:
 
 ```sh
 python scrape.py
@@ -30,33 +32,41 @@ python scrape.py
 
 Once scraping is complete, the data will be saved to disk.
 
-## CLI Options:
+### CLI Options:
 
-### --out <filename>
+#### --out <filename>
 
 Updates the filename where the final scrape data is saved.  Defaults to `applicant_data.json`.
 
 _Example:_
-```bash
-$ python scrape.py --out dataset.json
+```sh
+python scrape.py --out dataset.json
 ```
 
-### --page <number>
+#### --page <number>
 
 Begins the scrape at the given page number.  Defaults to 1.
 
 _Example:_
-```bash
-$ python scrape.py --page 35
+```sh
+python scrape.py --page 35
 ```
 
-### --limit <number>
+#### --limit <number>
 
 Limits the scrape to the given number of pages.  By default, all pages will be crawled.
 
 _Example:_
-```bash
-$ python scrape.py --limit 10
+```sh
+python scrape.py --limit 10
+```
+
+## Running the cleaner:
+
+Execute the `clean.py` script:
+
+```sh
+python clean.py
 ```
 
 ## About the Project
