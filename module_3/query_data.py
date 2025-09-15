@@ -79,9 +79,11 @@ def answer_questions():
                 SELECT
                     AVG(gpa) as avg_gpa
                 FROM {table_name}
-                WHERE year=%s AND season=%s;
+                WHERE year=%s
+                    AND season=%s
+                    AND us_or_international != %s;
             """,
-                [2025, "fall"],
+                [2025, "fall", "international"],
             )[0]["avg_gpa"],
 
             "formatted": lambda result: f"Average GPA: {result:.2f}",
@@ -137,7 +139,7 @@ def answer_questions():
                 SELECT
                     COUNT(*)
                 FROM {table_name}
-                WHERE degree=%s AND llm_generated_university=%s and llm_generated_program=%s;
+                WHERE degree=%s AND llm_generated_university=%s AND llm_generated_program=%s;
             """,
                 ["masters", "Johns Hopkins University", "Computer Science"],
             )[0]["count"],
