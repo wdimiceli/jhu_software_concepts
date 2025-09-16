@@ -3,3 +3,7 @@ flask
 huggingface_hub
 llama-cpp-python
 psycopg[binary]
+pytest
+pytest-cov
+sphinx
+sphinx-rtd-theme
