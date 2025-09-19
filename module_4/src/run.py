@@ -8,13 +8,9 @@ from blueprints.grad_data.routes import bp as grad_data
 from postgres_manager import start_postgres
 
 
-def create_app(config=None):
+def create_app():
     """Create and configure the Flask application."""
     app = Flask(__name__)
-    
-    # Configure app
-    if config:
-        app.config.update(config)
     
     # Register the blueprint for the portfolio section.
     # This handles "/", "/contact", and "/projects".

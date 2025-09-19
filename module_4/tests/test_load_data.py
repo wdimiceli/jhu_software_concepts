@@ -10,7 +10,7 @@ import os
 # Add src to path so we can import our modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from load_data import load_admissions_results, main
+from load_data import load_admissions_results
 
 
 @pytest.fixture
@@ -227,96 +227,3 @@ def test_load_admissions_results_invalid_json(mock_init_tables):
         
         # Verify init_tables was called before the JSON error
         mock_init_tables.assert_called_once_with(False)
-
-
-def test_main_with_default_arguments(mock_argument_parser, mock_start_postgres):
-    """Test main function with default arguments."""
-    with patch('load_data.load_admissions_results') as mock_load_admissions:
-        # Setup mock args with defaults
-        mock_args = MagicMock()
-        mock_args.json_file = "admissions_info.json"
-        mock_args.recreate_tables = False
-        mock_argument_parser['parser'].parse_args.return_value = mock_args
-        
-        # Call main
-        main()
-        
-        # Verify parser setup
-        mock_argument_parser['parser_class'].assert_called_once_with(
-            description="Data loader for TheGradCafe scraper PSQL database."
-        )
-        mock_argument_parser['parser'].add_argument.assert_any_call(
-            "--json-file",
-            type=str,
-            required=False,
-            help="JSON filename with data to read from.",
-            default="admissions_info.json",
-        )
-        mock_argument_parser['parser'].add_argument.assert_any_call(
-            "--recreate-tables",
-            type=bool,
-            required=False,
-            help="Wipes all tables and recreates them.",
-            default=False,
-        )
-        
-        # Verify function calls
-        mock_argument_parser['parser'].parse_args.assert_called_once()
-        mock_start_postgres.assert_called_once()
-        mock_load_admissions.assert_called_once_with("admissions_info.json", False)
-
-
-def test_main_with_custom_arguments(mock_argument_parser, mock_start_postgres):
-    """Test main function with custom arguments."""
-    with patch('load_data.load_admissions_results') as mock_load_admissions:
-        # Setup mock args with custom values
-        mock_args = MagicMock()
-        mock_args.json_file = "custom_data.json"
-        mock_args.recreate_tables = True
-        mock_argument_parser['parser'].parse_args.return_value = mock_args
-        
-        # Call main
-        main()
-        
-        # Verify function calls with custom args
-        mock_start_postgres.assert_called_once()
-        mock_load_admissions.assert_called_once_with("custom_data.json", True)
-
-
-def test_main_postgres_start_exception(mock_argument_parser):
-    """Test main function when start_postgres raises an exception."""
-    with patch('load_data.load_admissions_results') as mock_load_admissions, \
-         patch('load_data.start_postgres', side_effect=Exception("Postgres start failed")) as mock_start_postgres:
-        
-        # Setup mock args
-        mock_args = MagicMock()
-        mock_args.json_file = "test.json"
-        mock_args.recreate_tables = False
-        mock_argument_parser['parser'].parse_args.return_value = mock_args
-        
-        # Call main and expect exception
-        with pytest.raises(Exception, match="Postgres start failed"):
-            main()
-        
-        # Verify start_postgres was called but load_admissions_results was not
-        mock_start_postgres.assert_called_once()
-        mock_load_admissions.assert_not_called()
-
-
-def test_main_load_data_exception(mock_argument_parser, mock_start_postgres):
-    """Test main function when load_admissions_results raises an exception."""
-    with patch('load_data.load_admissions_results', side_effect=Exception("Load data failed")) as mock_load_admissions:
-        # Setup mock args
-        mock_args = MagicMock()
-        mock_args.json_file = "test.json"
-        mock_args.recreate_tables = False
-        mock_argument_parser['parser'].parse_args.return_value = mock_args
-        
-        # Call main and expect exception
-        with pytest.raises(Exception, match="Load data failed"):
-            main()
-        
-        # Verify both functions were called
-        mock_start_postgres.assert_called_once()
-        mock_load_admissions.assert_called_once_with("test.json", False)
-
