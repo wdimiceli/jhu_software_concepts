@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-"""Flask + tiny local LLM standardizer with incremental JSONL CLI output."""
+"""Flask + tiny local LLM standardizer."""
 
 from __future__ import annotations
 
 import json
 import os
 import re
-import sys
 import difflib
 from typing import Any, Dict, List, Tuple
 
@@ -283,81 +282,3 @@ def standardize() -> Any:
     return jsonify({"rows": out})
 
 
-def _cli_process_file(
-    in_path: str,
-    out_path: str | None,
-    append: bool,
-    to_stdout: bool,
-) -> None:
-    """Process a JSON file and write JSONL incrementally."""
-    with open(in_path, "r", encoding="utf-8") as f:
-        rows = _normalize_input(json.load(f))
-
-    sink = sys.stdout if to_stdout else None
-    if not to_stdout:
-        out_path = out_path or (in_path + ".jsonl")
-        mode = "a" if append else "w"
-        sink = open(out_path, mode, encoding="utf-8")
-
-    assert sink is not None  # for type-checkers
-
-    try:
-        for row in rows:
-            program_text = (row or {}).get("program_name") or ""
-            school_name = (row or {}).get("school") or ""
-            result = _call_llm(f"{program_text}, {school_name}")
-            row["llm-generated-program"] = result["standardized_program"]
-            row["llm-generated-university"] = result["standardized_university"]
-
-            json.dump(row, sink, ensure_ascii=False)
-            sink.write("\n")
-            sink.flush()
-    finally:
-        if sink is not sys.stdout:
-            sink.close()
-
-
-if __name__ == "__main__":
-    import argparse
-
-    parser = argparse.ArgumentParser(
-        description="Standardize program/university with a tiny local LLM.",
-    )
-    parser.add_argument(
-        "--file",
-        help="Path to JSON input (list of rows or {'rows': [...]})",
-        default=None,
-    )
-    parser.add_argument(
-        "--serve",
-        action="store_true",
-        help="Run the HTTP server instead of CLI.",
-    )
-    parser.add_argument(
-        "--out",
-        default=None,
-        help="Output path for JSON Lines (ndjson). "
-        "Defaults to <input>.jsonl when --file is set.",
-    )
-    parser.add_argument(
-        "--append",
-        action="store_true",
-        help="Append to the output file instead of overwriting.",
-    )
-    parser.add_argument(
-        "--stdout",
-        action="store_true",
-        help="Write JSON Lines to stdout instead of a file.",
-    )
-    args = parser.parse_args()
-
-    if args.serve or args.file is None:
-        port = int(os.getenv("PORT", "8000"))
-        app.run(host="0.0.0.0", port=port, debug=False)
-    else:
-        _cli_process_file(
-            in_path=args.file,
-            out_path=args.out,
-            append=bool(args.append),
-            to_stdout=bool(args.stdout),
-        )

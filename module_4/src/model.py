@@ -6,9 +6,8 @@ The `AdmissionResult` class serves as the primary model for an admissions record
 import psycopg
 import psycopg.rows
 import re
-import json
 from datetime import datetime
-from dataclasses import asdict, dataclass, is_dataclass
+from dataclasses import dataclass
 from bs4.element import Tag
 
 from llm_hosting.app import _call_llm
@@ -216,28 +215,6 @@ class AdmissionResult:
 
             return cur.fetchone()[0]  # type: ignore
 
-    @classmethod
-    def fetch(cls, offset=0, limit=10, where={}):
-        """Fetch a paginated list of admission results from the database."""
-        where_clause, params = _build_where_clause(where)
-
-        params.extend([offset, limit])
-
-        with get_connection().cursor() as cur:
-            cur.execute(
-                f"""
-                SELECT * from admissions_info
-                {where_clause}
-                OFFSET %s
-                LIMIT %s;
-            """,
-                params,
-            )
-
-            return {
-                "rows": [cls._from_db_row(r) for r in cur.fetchall()],
-                "total": cls.count(where),
-            }
 
     @classmethod
     def execute_raw(cls, query, params):
@@ -260,52 +237,6 @@ class AdmissionResult:
 
             return 0
 
-    @classmethod
-    def _from_db_row(cls, row):
-        """Construct an AdmissionResult object from a database row."""
-        (
-            id,
-            school,
-            program_name,
-            _program,
-            comments,
-            added_on,
-            full_info_url,
-            decision_status,
-            decision_date,
-            season,
-            year,
-            _term,
-            applicant_region,
-            gpa,
-            gre_general,
-            gre_verbal,
-            gre_analytical_writing,
-            degree_type,
-            llm_generated_program,
-            llm_generated_university,
-        ) = row
-
-        return AdmissionResult(
-            id=id,
-            school=school,
-            program_name=program_name,
-            degree_type=degree_type,
-            added_on=added_on,
-            decision_status=decision_status,
-            decision_date=decision_date,
-            season=season,
-            year=year,
-            applicant_region=applicant_region,
-            gre_general=gre_general,
-            gre_verbal=gre_verbal,
-            gre_analytical_writing=gre_analytical_writing,
-            gpa=gpa,
-            comments=comments,
-            full_info_url=full_info_url,
-            llm_generated_program=llm_generated_program,
-            llm_generated_university=llm_generated_university,
-        )
 
     @classmethod
     def from_soup(cls, table_row: list[Tag]):
@@ -422,9 +353,6 @@ class AdmissionResult:
 
         return AdmissionResult(**values)
 
-    def to_json(self):
-        """Serialize the AdmissionResult object to a JSON string."""
-        return json.dumps(self, default=_json_encoder, indent=2)
 
     def save_to_db(self):
         """Save the AdmissionResult instance to the database."""
@@ -509,15 +437,3 @@ class AdmissionResult:
         self.llm_generated_university = result["standardized_university"]
 
 
-def _json_encoder(obj):
-    """Serialize the types in this module to a JSON-friendly format."""
-    if isinstance(obj, set):
-        return sorted(list(obj))
-
-    elif isinstance(obj, datetime):
-        return obj.isoformat()
-
-    elif is_dataclass(obj):
-        return asdict(obj)  # type: ignore
-
-    raise TypeError(f"Cannot serialize object of type {type(obj)}")
