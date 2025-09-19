@@ -205,7 +205,7 @@ def test_admission_result_clean_and_augment():
         llm_generated_program=None, llm_generated_university=None
     )
     
-    with patch('model._call_llm') as mock_llm:
+    with patch('model.call_llm') as mock_llm:
         mock_llm.return_value = {
             "standardized_program": "Computer Science",
             "standardized_university": "Test University"
