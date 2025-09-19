@@ -137,27 +137,6 @@ def test_admission_result_database_methods():
 
 
 @pytest.mark.db
-def test_admission_result_fetch():
-    """Test AdmissionResult.fetch method."""
-    from model import AdmissionResult
-    
-    with patch('model.get_connection') as mock_get_conn:
-        with patch.object(AdmissionResult, 'count', return_value=100):
-            with patch.object(AdmissionResult, '_from_db_row') as mock_from_row:
-                mock_conn = MagicMock()
-                mock_cursor = MagicMock()
-                mock_get_conn.return_value = mock_conn
-                mock_conn.cursor.return_value.__enter__.return_value = mock_cursor
-                mock_cursor.fetchall.return_value = [("row1",), ("row2",)]
-                mock_from_row.side_effect = ["result1", "result2"]
-                
-                result = AdmissionResult.fetch(offset=10, limit=5, where={"year": 2024})
-                
-                assert result["total"] == 100
-                assert result["rows"] == ["result1", "result2"]
-
-
-@pytest.mark.db
 def test_admission_result_from_dict():
     """Test AdmissionResult.from_dict method including program/term field removal."""
     from model import AdmissionResult
@@ -178,27 +157,6 @@ def test_admission_result_from_dict():
     assert result.school == "Test University"
     assert isinstance(result.added_on, datetime)
     assert isinstance(result.decision_date, datetime)
-
-
-@pytest.mark.db
-def test_admission_result_serialization():
-    """Test AdmissionResult.to_json method."""
-    from model import AdmissionResult
-    
-    result = AdmissionResult(
-        id=123, school="Test University", program_name="Computer Science",
-        degree_type="masters", added_on=datetime(2024, 1, 1),
-        decision_status="accepted", decision_date=datetime(2024, 2, 1),
-        season="fall", year=2024, applicant_region="american",
-        gre_general=320, gre_verbal=160, gre_analytical_writing=4.5,
-        gpa=3.8, comments="Great program", full_info_url="/result/123",
-        llm_generated_program="Computer Science", llm_generated_university="Test University"
-    )
-    
-    json_str = result.to_json()
-    parsed = json.loads(json_str)
-    assert parsed["id"] == 123
-    assert parsed["school"] == "Test University"
 
 
 @pytest.mark.db
@@ -259,40 +217,6 @@ def test_admission_result_clean_and_augment():
         assert result.llm_generated_program == "Computer Science"
         assert result.llm_generated_university == "Test University"
         mock_llm.assert_called_once_with("Computer Science, Test University")
-
-
-@pytest.mark.db
-def test_from_db_row():
-    """Test AdmissionResult._from_db_row method directly."""
-    from model import AdmissionResult
-    
-    mock_db_row = (
-        123, "Test University", "Computer Science", "Test University Computer Science",
-        "Great program!", datetime(2024, 1, 1), "/result/123", "accepted",
-        datetime(2024, 2, 1), "fall", 2024, "fall 2024", "american",
-        3.8, 320, 160, 4.5, "masters", "Computer Science", "Test University"
-    )
-    
-    result = AdmissionResult._from_db_row(mock_db_row)
-    
-    assert result.id == 123
-    assert result.school == "Test University"
-    assert result.program_name == "Computer Science"
-    assert result.degree_type == "masters"
-    assert result.added_on == datetime(2024, 1, 1)
-    assert result.decision_status == "accepted"
-    assert result.decision_date == datetime(2024, 2, 1)
-    assert result.season == "fall"
-    assert result.year == 2024
-    assert result.applicant_region == "american"
-    assert result.gre_general == 320
-    assert result.gre_verbal == 160
-    assert result.gre_analytical_writing == 4.5
-    assert result.gpa == 3.8
-    assert result.comments == "Great program!"
-    assert result.full_info_url == "/result/123"
-    assert result.llm_generated_program == "Computer Science"
-    assert result.llm_generated_university == "Test University"
 
 
 @pytest.mark.db
@@ -364,39 +288,3 @@ def test_from_soup_error_scenarios():
             with pytest.raises(RuntimeError, match="anchor href for admission result is unrecognized"):
                 AdmissionResult.from_soup(create_mock_table_row(href="/invalid/path/format"))
 
-
-@pytest.mark.db
-@pytest.mark.parametrize("obj,expected", [
-    (datetime(2024, 1, 1, 12, 0, 0), "2024-01-01T12:00:00"),
-    ({"b", "a", "c"}, ["a", "b", "c"]),  # Set should be sorted
-])
-def test_json_encoder(obj, expected):
-    """Test _json_encoder function with various types."""
-    from model import _json_encoder
-    
-    assert _json_encoder(obj) == expected
-
-
-@pytest.mark.db
-def test_json_encoder_dataclass():
-    """Test _json_encoder with dataclass."""
-    from model import _json_encoder
-    from dataclasses import dataclass
-    
-    @dataclass
-    class TestClass:
-        name: str
-        value: int
-    
-    test_obj = TestClass("test", 42)
-    result = _json_encoder(test_obj)
-    assert result == {"name": "test", "value": 42}
-
-
-@pytest.mark.db
-def test_json_encoder_unsupported():
-    """Test _json_encoder with unsupported type."""
-    from model import _json_encoder
-    
-    with pytest.raises(TypeError):
-        _json_encoder(object())

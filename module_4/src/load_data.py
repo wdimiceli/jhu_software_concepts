@@ -4,8 +4,9 @@ This module provides functionality to load scraped admissions data into a Postgr
 """
 
 import json
+import argparse
 from model import AdmissionResult, init_tables
-from postgres_manager import get_connection
+from postgres_manager import get_connection, start_postgres
 
 
 def load_admissions_results(filename: str, recreate=False):
@@ -34,8 +35,6 @@ def load_admissions_results(filename: str, recreate=False):
         print("Exception was raised, aborting ...")
         # Re-raise the exception to indicate a failure
         raise e
-
-
 def load_data_if_available(filename="admissions_info.json", recreate=False):
     """Load data from file if it exists, with graceful error handling for startup use."""
     import os
@@ -52,5 +51,35 @@ def load_data_if_available(filename="admissions_info.json", recreate=False):
         return False
 
 
+def main():
+    """Main function to load admissions data from command line arguments."""
+    parser = argparse.ArgumentParser(
+        description="Data loader for TheGradCafe scraper PSQL database."
+    )
+    
+    parser.add_argument(
+        "--json-file",
+        type=str,
+        required=False,
+        help="JSON filename with data to read from.",
+        default="admissions_info.json",
+    )
+    
+    parser.add_argument(
+        "--recreate-tables",
+        type=bool,
+        required=False,
+        help="Wipes all tables and recreates them.",
+        default=False,
+    )
+    
+    args = parser.parse_args()
+    
+    start_postgres()
+    load_admissions_results(args.json_file, args.recreate_tables)
+
+
+if __name__ == "__main__":
+    main()
 
 
