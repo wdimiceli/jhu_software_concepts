@@ -10,7 +10,7 @@ import os
 # Add src to path so we can import our modules
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), '..', 'src'))
 
-from load_data import load_admissions_results
+from load_data import load_admissions_results, load_data_if_available
 
 
 @pytest.fixture
@@ -227,3 +227,66 @@ def test_load_admissions_results_invalid_json(mock_init_tables):
         
         # Verify init_tables was called before the JSON error
         mock_init_tables.assert_called_once_with(False)
+
+
+class TestLoadDataIfAvailable:
+    """Tests for the load_data_if_available function."""
+    
+    @patch('os.path.exists')
+    def test_load_data_if_available_file_not_found(self, mock_exists):
+        """Test load_data_if_available when file doesn't exist."""
+        mock_exists.return_value = False
+        
+        # Capture print output
+        with patch('builtins.print') as mock_print:
+            result = load_data_if_available('nonexistent.json')
+        
+        # Verify return value and print message
+        assert result is False
+        mock_exists.assert_called_once_with('nonexistent.json')
+        mock_print.assert_called_once_with("Data file 'nonexistent.json' not found, skipping data load")
+    
+    @patch('os.path.exists')
+    @patch('load_data.load_admissions_results')
+    def test_load_data_if_available_success(self, mock_load_results, mock_exists):
+        """Test load_data_if_available when file exists and loading succeeds."""
+        mock_exists.return_value = True
+        mock_load_results.return_value = None  # Successful execution
+        
+        result = load_data_if_available('test.json', recreate=True)
+        
+        # Verify return value and function calls
+        assert result is True
+        mock_exists.assert_called_once_with('test.json')
+        mock_load_results.assert_called_once_with('test.json', True)
+    
+    @patch('os.path.exists')
+    @patch('load_data.load_admissions_results')
+    def test_load_data_if_available_load_exception(self, mock_load_results, mock_exists):
+        """Test load_data_if_available when loading raises an exception."""
+        mock_exists.return_value = True
+        mock_load_results.side_effect = Exception("Database connection failed")
+        
+        # Capture print output
+        with patch('builtins.print') as mock_print:
+            result = load_data_if_available('test.json')
+        
+        # Verify return value and error handling
+        assert result is False
+        mock_exists.assert_called_once_with('test.json')
+        mock_load_results.assert_called_once_with('test.json', False)
+        mock_print.assert_called_once_with("Failed to load data from 'test.json': Database connection failed")
+    
+    @patch('os.path.exists')
+    @patch('load_data.load_admissions_results')
+    def test_load_data_if_available_default_parameters(self, mock_load_results, mock_exists):
+        """Test load_data_if_available with default parameters."""
+        mock_exists.return_value = True
+        mock_load_results.return_value = None
+        
+        result = load_data_if_available()
+        
+        # Verify default filename and recreate=False
+        assert result is True
+        mock_exists.assert_called_once_with('admissions_info.json')
+        mock_load_results.assert_called_once_with('admissions_info.json', False)
