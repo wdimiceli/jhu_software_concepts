@@ -10,7 +10,7 @@ from datetime import datetime
 from dataclasses import dataclass
 from bs4.element import Tag
 
-from llm_hosting.app import _call_llm
+from clean import call_llm
 from postgres_manager import get_connection
 
 
@@ -429,7 +429,7 @@ class AdmissionResult:
 
         print(f"Running cleaner on entry {self.id}: {program_and_school}")
 
-        result = _call_llm(program_and_school)
+        result = call_llm(program_and_school)
 
         print(f"Got cleaned fields: {result}")
 

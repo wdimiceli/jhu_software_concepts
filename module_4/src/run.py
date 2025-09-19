@@ -23,10 +23,7 @@ def create_app():
     return app
 
 
-# Create the main Flask application instance for production.
-root_app = create_app()
-
-if __name__ == "__main__":
+def start():
     """Start up the development server."""
     start_postgres()
     
@@ -39,5 +36,8 @@ if __name__ == "__main__":
             print(f"Could not import data loading module: {e}")
         except Exception as e:
             print(f"Data loading failed during startup: {e}")
+
+    # Create the main Flask application instance for production.
+    root_app = create_app()
     
     root_app.run(host='0.0.0.0', port=8080)
