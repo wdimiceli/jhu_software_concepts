@@ -37,7 +37,8 @@ def load_admissions_results(filename: str, recreate=False):
         raise e
 
 
-if __name__ == "__main__":
+def main():
+    """Main function to run the data loader with command line arguments."""
     parser = argparse.ArgumentParser(
         description="Data loader for TheGradCafe scraper PSQL database."
     )
@@ -63,3 +64,5 @@ if __name__ == "__main__":
     start_postgres()
 
     load_admissions_results(args.json_file, args.recreate_tables)
+
+

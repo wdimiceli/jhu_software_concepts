@@ -5,16 +5,17 @@
 
   <section id="controls" class="controls">
     <div class="control">
-      {% if scrape_state["running"] %}
+      {% if scrape_running %}
         <div class="loader" style="margin-right:12px"></div>
-      {% elif poll and "entries" in scrape_state %}
-        <span>Got {{ scrape_state["entries"] | length }} entries!</span>
+      {% elif poll %}
+        <span>Got {{ last_scraped_entry_count }} entries!</span>
       {% else %}
         <span>Fetch new data from TheGradCafe:</span>
       {% endif %}
 
       <button
-        {% if scrape_state["running"] %}
+        data-testid="pull-data-btn"
+        {% if scrape_running %}
           hx-get="?poll"
           disabled
           {% else %}
@@ -24,7 +25,7 @@
         hx-target="#controls"
         hx-select="#controls"
         hx-swap="outerHTML"
-        hx-trigger="{{ 'load delay:1s' if scrape_state["running"] else '' }}"
+        hx-trigger="{{ 'load delay:1s' if scrape_running else '' }}"
       >
         Pull Data
       </button>
@@ -43,7 +44,8 @@
       {% endif %}
 
       <button
-        {% if scrape_state["running"] %}
+        data-testid="update-analysis-btn"
+        {% if scrape_running %}
           disabled
         {% endif %}
         hx-get="?refresh"

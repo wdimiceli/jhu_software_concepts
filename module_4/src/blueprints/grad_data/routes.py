@@ -6,9 +6,9 @@ it for display, and renders the corresponding HTML templates.
 """
 
 import threading
+import scrape
 from flask import Blueprint, render_template, request
 from query_data import answer_questions
-from scrape import scrape_data
 from model import AdmissionResult
 
 
@@ -25,6 +25,7 @@ bp = Blueprint(
 
 scrape_state = {
     "running": False,
+    "entries": None,
 }
 
 
@@ -38,16 +39,14 @@ def begin_refresh():
         latest_id = AdmissionResult.get_latest_id()
         print(f"Latest id: {latest_id}")
 
-        entries = scrape_data(1, 30000, latest_id)
+        entries = scrape.scrape_data(1, 30000, latest_id)
 
         for entry in entries:
             entry.clean_and_augment()
             entry.save_to_db()
 
-        scrape_state = {
-            "running": False,
-            "entries": entries,
-        }
+        scrape_state["running"] = False
+        scrape_state["entries"] = entries
 
     finally:
         scrape_state["running"] = False
@@ -74,7 +73,8 @@ def analysis():
         "questions": answer_questions(),
         "refresh": refresh,
         "poll": poll,
-        "scrape_state": scrape_state
+        "scrape_running": scrape_state["running"],
+        "last_scraped_entry_count": len(scrape_state.get("entries") or [])
     }
 
     # Render the HTML template with the prepared properties.

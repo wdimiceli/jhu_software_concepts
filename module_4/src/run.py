@@ -6,16 +6,28 @@ from blueprints.grad_data.routes import bp as grad_data
 
 from postgres_manager import start_postgres
 
-# Create the main Flask application instance.
-root_app = Flask(__name__)
 
-# Register the blueprint for the portfolio section.
-# This handles "/", "/contact", and "/projects".
-root_app.register_blueprint(portfolio)
+def create_app(config=None):
+    """Create and configure the Flask application."""
+    app = Flask(__name__)
+    
+    # Configure app
+    if config:
+        app.config.update(config)
+    
+    # Register the blueprint for the portfolio section.
+    # This handles "/", "/contact", and "/projects".
+    app.register_blueprint(portfolio)
+    
+    # Register the blueprint for the graduate data analysis section.
+    # This handles "/grad-data/analysis".
+    app.register_blueprint(grad_data, url_prefix="/grad-data")
+    
+    return app
 
-# Register the blueprint for the graduate data analysis section.
-# This handles "/grad-data/analysis".
-root_app.register_blueprint(grad_data, url_prefix="/grad-data")
+
+# Create the main Flask application instance for production.
+root_app = create_app()
 
 if __name__ == "__main__":
     """Start up the development server."""
