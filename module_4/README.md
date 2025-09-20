@@ -1,49 +1,30 @@
-# Module 2: Postgres Database
+# Module 4: Pytest
 
 <small>Course: EN.605.256.8VL.FA25</small>
 <br/>
-<small>Module due: 09/14/2025 11:59PM EST</small>
+<small>Module due: 12/14/2025 11:59PM EST</small>
 
-This module contains setup scripts, utilities, and SQL queries to load and analyize the data scraped under Module 2.  The portfolio site has been improved with the analysis results and functions to update our dataset on-the-fly.
+This module extends the Grad Café Analytics system with automated testing using Pytest.
 
 ## Requirements
 
 * Python 3.10+
+* PostgreSQL 14+
 
-* Postgres 14+
+### Getting started
 
-A Postgres installation is required to run this code.  For OSX users, homebrew is the most expedient way to get started:
-
-```sh
-$ brew install postgresql
-```
-
-<small>_The codebase was developed on OSX 15.6.1.  Compatible systems should work, however the setup instructions may differ for Windows._</small>
-
-## Getting started
-
-To run the app, first set up your environment and install the package dependencies:
-
-```sh
+```bash
 python -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-Then, execute the `load_data.py` script:
-
-```sh
-python load_data.py
-```
-
-The local Postgres instance will create a database under the `./pgdata` directory.
-
 ### Starting up the Flask server
 
-Once you have your environment ready and loaded some data, execute the `run.py` script:
+Once you have your environment ready and loaded some data, execute `start()` in the `run` module:
 
 ```sh
-python run.py
+PYTHONPATH=src python -c "import run;run.start()"
 ```
 
 Flask should confirm the app is running and print
@@ -52,10 +33,33 @@ Flask should confirm the app is running and print
 
 to your terminal. Open a web browser and navigate to `http://localhost:8080` to begin browsing the app.
 
+### Loading data
 
+To load an initial data set, set the `DATA_FILE` environment variable:
+
+```sh
+PYTHONPATH=src DATA_FILE=src/admissions_info.json python -c "import run;run.start()"
+```
+
+## Testing
+
+```bash
+# All tests with coverage
+pytest -m "web or buttons or analysis or db or integration"
+
+# Specific categories
+pytest -m web          # Flask route tests
+pytest -m buttons      # Button behavior tests
+pytest -m analysis     # Data formatting tests
+pytest -m db           # Database tests
+pytest -m integration  # End-to-end tests
+
+# Coverage report
+pytest --cov=src --cov-report=html
+```
 
 ## Citations
 
-Afif, Temani. n.d. “The Dots CSS Loaders Collection.” https://css-loaders.com/dots/.
+Afif, Temani. n.d. "The Dots CSS Loaders Collection." https://css-loaders.com/dots/.
 
-“Category:Green Check Marks - Wikimedia Commons.” n.d. https://commons.wikimedia.org/wiki/Category:Green_check_marks.
+"Category:Green Check Marks - Wikimedia Commons." n.d. https://commons.wikimedia.org/wiki/Category:Green_check_marks.
