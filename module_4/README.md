@@ -38,7 +38,20 @@ to your terminal. Open a web browser and navigate to `http://localhost:8080` to 
 To load an initial data set, set the `DATA_FILE` environment variable:
 
 ```sh
+
 PYTHONPATH=src DATA_FILE=src/admissions_info.json python -c "import run;run.start()"
+```
+
+### Environment configuration
+
+Postgres settings and connection info can be altered via the following environment variables:
+
+```
+DATA_DIR     ->  Directory where Postgres stores data
+PG_HOST      ->  Host for Postgres server
+PG_PORT      ->  Port for Postgres server
+PG_USER      ->  Postgres user for the project
+PG_DB        ->  Database name
 ```
 
 ## Testing

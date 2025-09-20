@@ -2,11 +2,6 @@
 
 It initializes a Postgres data directory if necessary, starts Postgres as a subprocess,
 creates a user, password, and database if missing, and provides a ready-to-use connection.
-
-User Credentials:
-- User: student
-- Password: modernsoftwareconcepts
-- Database: admissions
 """
 
 import subprocess
@@ -18,11 +13,11 @@ import sys
 import psycopg
 
 
-DATA_DIR = "pgdata"  # Directory where Postgres stores data
-PG_PORT = 5432  # Port for Postgres server
-PG_USER = "student"  # Postgres user for the project
-PG_PASSWORD = "modernsoftwareconcepts"  # Postgres user password
-PG_DB = "admissions"  # Database name
+DATA_DIR = os.getenv("PG_DATA_DIR", "pgdata")     # Directory where Postgres stores data
+PG_HOST = os.getenv("PG_HOST", "localhost")       # Host for Postgres server
+PG_PORT = int(os.getenv("PG_PORT", 5432))         # Port for Postgres server
+PG_USER = os.getenv("PG_USER", "student")         # Postgres user for the project
+PG_DB = os.getenv("PG_DB", "admissions")          # Database name
 
 
 def check_postgres_installed():
@@ -51,7 +46,7 @@ def stop_postgres(process):
 def setup_user_and_db():
     """Create the project user and database if they do not exist."""
     # Connect as default 'postgres' user
-    conn = psycopg.connect(dbname="postgres", user=PG_USER, host="localhost", port=PG_PORT)
+    conn = psycopg.connect(dbname="postgres", user=PG_USER, host=PG_HOST, port=PG_PORT)
     conn.autocommit = True
     cur = conn.cursor()
 
@@ -70,7 +65,7 @@ def setup_user_and_db():
 
 def get_connection():
     """Create and return a psycopg connection to the project database."""
-    return psycopg.connect(dbname=PG_DB, user=PG_USER, host="localhost", port=PG_PORT)
+    return psycopg.connect(dbname=PG_DB, user=PG_USER, host=PG_HOST, port=PG_PORT)
 
 
 def start_postgres():
@@ -91,7 +86,7 @@ def start_postgres():
     # Wait until Postgres is ready to accept connections
     for i in range(15):  # try for up to 15 seconds
         try:
-            conn = psycopg.connect(dbname="postgres", user=PG_USER, host="localhost", port=PG_PORT)
+            conn = psycopg.connect(dbname="postgres", user=PG_USER, host=PG_HOST, port=PG_PORT)
             conn.close()
             print("Postgres is ready.")
             break
