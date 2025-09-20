@@ -44,18 +44,7 @@ PYTHONPATH=src DATA_FILE=src/admissions_info.json python -c "import run;run.star
 ## Testing
 
 ```bash
-# All tests with coverage
-pytest -m "web or buttons or analysis or db or integration"
-
-# Specific categories
-pytest -m web          # Flask route tests
-pytest -m buttons      # Button behavior tests
-pytest -m analysis     # Data formatting tests
-pytest -m db           # Database tests
-pytest -m integration  # End-to-end tests
-
-# Coverage report
-pytest --cov=src --cov-report=html
+PYTHONPATH=src pytest -m "web or buttons or analysis or db or integration" --cov=src --cov-report=html
 ```
 
 ## Citations
