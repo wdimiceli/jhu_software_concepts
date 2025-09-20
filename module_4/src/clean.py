@@ -12,6 +12,7 @@ from typing import Dict, List, Tuple
 from huggingface_hub import hf_hub_download
 from llama_cpp import Llama
 
+
 # ---------------- Simplified Model config ----------------
 MODEL_REPO = "TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF"
 MODEL_FILE = "tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf"
@@ -19,12 +20,15 @@ N_THREADS = os.cpu_count() or 2
 N_CTX = 2048
 N_GPU_LAYERS = 0  # CPU-only
 
+
 # Canonical data files
 CANON_UNIS_PATH = "canon_universities.txt"
 CANON_PROGS_PATH = "canon_programs.txt"
 
+
 # JSON pattern matcher
 JSON_OBJ_RE = re.compile(r"\{.*?\}", re.DOTALL)
+
 
 # ---------------- Consolidated canonical data ----------------
 def _read_lines(path: str) -> List[str]:
@@ -35,32 +39,35 @@ def _read_lines(path: str) -> List[str]:
     except FileNotFoundError:
         return []
 
+
 CANON_UNIS = _read_lines(CANON_UNIS_PATH)
 CANON_PROGS = _read_lines(CANON_PROGS_PATH)
 
+
 # Consolidated normalization rules
 NORMALIZATION_RULES = {
-    'universities': {
-        'abbreviations': {
-            r'(?i)^mcg(\.|ill)?$': 'McGill University',
-            r'(?i)^(ubc|u\.?b\.?c\.?)$': 'University of British Columbia',
-            r'(?i)^uoft$': 'University of Toronto',
+    "universities": {
+        "abbreviations": {
+            r"(?i)^mcg(\.|ill)?$": "McGill University",
+            r"(?i)^(ubc|u\.?b\.?c\.?)$": "University of British Columbia",
+            r"(?i)^uoft$": "University of Toronto",
         },
-        'fixes': {
-            'McGiill University': 'McGill University',
-            'Mcgill University': 'McGill University',
-            'University Of British Columbia': 'University of British Columbia',
+        "fixes": {
+            "McGiill University": "McGill University",
+            "Mcgill University": "McGill University",
+            "University Of British Columbia": "University of British Columbia",
         },
-        'canonical': CANON_UNIS
+        "canonical": CANON_UNIS,
     },
-    'programs': {
-        'fixes': {
-            'Mathematic': 'Mathematics',
-            'Info Studies': 'Information Studies',
+    "programs": {
+        "fixes": {
+            "Mathematic": "Mathematics",
+            "Info Studies": "Information Studies",
         },
-        'canonical': CANON_PROGS
-    }
+        "canonical": CANON_PROGS,
+    },
 }
+
 
 # ---------------- Simplified prompt ----------------
 SYSTEM_PROMPT = (
@@ -73,22 +80,34 @@ SYSTEM_PROMPT = (
     "Return JSON with keys: standardized_program, standardized_university"
 )
 
+
 FEW_SHOTS: List[Tuple[Dict[str, str], Dict[str, str]]] = [
     (
         {"program": "Information Studies, McGill University"},
-        {"standardized_program": "Information Studies", "standardized_university": "McGill University"}
+        {
+            "standardized_program": "Information Studies",
+            "standardized_university": "McGill University",
+        },
     ),
     (
         {"program": "Information, McG"},
-        {"standardized_program": "Information Studies", "standardized_university": "McGill University"}
+        {
+            "standardized_program": "Information Studies",
+            "standardized_university": "McGill University",
+        },
     ),
     (
         {"program": "Mathematics, University Of British Columbia"},
-        {"standardized_program": "Mathematics", "standardized_university": "University of British Columbia"}
+        {
+            "standardized_program": "Mathematics",
+            "standardized_university": "University of British Columbia",
+        },
     ),
 ]
 
+
 _LLM: Llama | None = None
+
 
 def _load_llm() -> Llama:
     """Download and initialize the LLM model."""
@@ -113,6 +132,7 @@ def _load_llm() -> Llama:
     )
     return _LLM
 
+
 def _split_fallback(text: str) -> Tuple[str, str]:
     """Simple fallback parser when LLM returns non-JSON."""
     s = re.sub(r"\s+", " ", (text or "")).strip().strip(",")
@@ -122,7 +142,7 @@ def _split_fallback(text: str) -> Tuple[str, str]:
 
     # Apply university abbreviation expansions first
     expanded = False
-    for pattern, expansion in NORMALIZATION_RULES['universities']['abbreviations'].items():
+    for pattern, expansion in NORMALIZATION_RULES["universities"]["abbreviations"].items():
         if re.fullmatch(pattern, uni or ""):
             uni = expansion
             expanded = True
@@ -130,20 +150,21 @@ def _split_fallback(text: str) -> Tuple[str, str]:
 
     # Title-case program
     prog = prog.title()
-    
+
     # Handle university capitalization
     if uni:
         if not expanded:
             # Only title case if it wasn't already expanded to proper name
             uni = uni.title()
         # Apply common fixes after any title casing
-        uni = NORMALIZATION_RULES['universities']['fixes'].get(uni, uni)
+        uni = NORMALIZATION_RULES["universities"]["fixes"].get(uni, uni)
         # Normalize 'Of' -> 'of'
         uni = re.sub(r"\bOf\b", "of", uni)
     else:
         uni = "Unknown"
-    
+
     return prog, uni
+
 
 def _best_match(name: str, candidates: List[str], cutoff: float = 0.86) -> str | None:
     """Fuzzy match using difflib."""
@@ -152,47 +173,49 @@ def _best_match(name: str, candidates: List[str], cutoff: float = 0.86) -> str |
     matches = difflib.get_close_matches(name, candidates, n=1, cutoff=cutoff)
     return matches[0] if matches else None
 
+
 def _normalize_text(text: str, text_type: str) -> str:
     """Unified normalization for both programs and universities."""
     rules = NORMALIZATION_RULES[text_type]
     normalized = (text or "").strip()
     expanded = False
-    
+
     # Apply abbreviation expansions (universities only)
-    if 'abbreviations' in rules:
-        for pattern, expansion in rules['abbreviations'].items():
+    if "abbreviations" in rules:
+        for pattern, expansion in rules["abbreviations"].items():
             if re.fullmatch(pattern, normalized):
                 normalized = expansion
                 expanded = True
                 break
-    
+
     # Apply capitalization rules
-    if text_type == 'programs':
+    if text_type == "programs":
         normalized = normalized.title()
         # Apply common fixes after title casing
-        normalized = rules['fixes'].get(normalized, normalized)
+        normalized = rules["fixes"].get(normalized, normalized)
     else:  # universities
         if normalized:
             if not expanded:
                 # Only title case if it wasn't already expanded to proper name
                 normalized = normalized.title()
             # Apply common fixes after any title casing
-            normalized = rules['fixes'].get(normalized, normalized)
+            normalized = rules["fixes"].get(normalized, normalized)
             # Normalize 'Of' -> 'of'
             normalized = re.sub(r"\bOf\b", "of", normalized)
-    
+
     # Check canonical list or fuzzy match
-    canonical = rules['canonical']
+    canonical = rules["canonical"]
     if normalized in canonical:
         return normalized
-    
-    cutoff = 0.84 if text_type == 'programs' else 0.86
+
+    cutoff = 0.84 if text_type == "programs" else 0.86
     match = _best_match(normalized, canonical, cutoff=cutoff)
-    
-    if text_type == 'universities':
+
+    if text_type == "universities":
         return match or normalized or "Unknown"
     else:
         return match or normalized
+
 
 def call_llm(program_text: str) -> Dict[str, str]:
     """Query the LLM and return standardized fields."""
@@ -202,7 +225,9 @@ def call_llm(program_text: str) -> Dict[str, str]:
     for x_in, x_out in FEW_SHOTS:
         messages.append({"role": "user", "content": json.dumps(x_in, ensure_ascii=False)})
         messages.append({"role": "assistant", "content": json.dumps(x_out, ensure_ascii=False)})
-    messages.append({"role": "user", "content": json.dumps({"program": program_text}, ensure_ascii=False)})
+    messages.append(
+        {"role": "user", "content": json.dumps({"program": program_text}, ensure_ascii=False)}
+    )
 
     out = llm.create_chat_completion(
         messages=messages,
@@ -220,11 +245,10 @@ def call_llm(program_text: str) -> Dict[str, str]:
     except Exception:
         std_prog, std_uni = _split_fallback(program_text)
 
-    std_prog = _normalize_text(std_prog, 'programs')
-    std_uni = _normalize_text(std_uni, 'universities')
-    
+    std_prog = _normalize_text(std_prog, "programs")
+    std_uni = _normalize_text(std_uni, "universities")
+
     return {
         "standardized_program": std_prog,
         "standardized_university": std_uni,
     }
-

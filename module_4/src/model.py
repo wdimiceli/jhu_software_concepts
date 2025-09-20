@@ -3,33 +3,44 @@
 The `AdmissionResult` class serves as the primary model for an admissions record.
 """
 
+import os
 import psycopg
 import psycopg.rows
 import re
 from datetime import datetime
 from dataclasses import dataclass
 from bs4.element import Tag
+from psycopg import sql
 
-from clean import call_llm
-from postgres_manager import get_connection
+import clean
+import postgres_manager
+
+
+DB_TABLE = "admissions_info"
+
+def get_table():
+    """"""
+    return str(os.environ.get("DB_TABLE", DB_TABLE))
 
 
 def init_tables(recreate=False):
     """Initialize the postgres tables for storing the admissions scrape data."""
-    conn = get_connection()
+    conn = postgres_manager.get_connection()
 
     with conn.cursor() as cur:
         if recreate:
             print("Dropping tables and recreating...")
 
-            cur.execute("""
-                DROP TABLE IF EXISTS admissions_info;
-            """)
+            cur.execute(sql.SQL("""
+                DROP TABLE IF EXISTS {};
+            """).format(
+                sql.Identifier(get_table())
+            ))
 
             conn.commit()
 
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS admissions_info (
+        cur.execute(sql.SQL("""
+            CREATE TABLE IF NOT EXISTS {} (
                 p_id INTEGER PRIMARY KEY,
                 school TEXT,
                 program_name TEXT,
@@ -51,7 +62,9 @@ def init_tables(recreate=False):
                 llm_generated_program TEXT,
                 llm_generated_university TEXT
             );
-        """)
+        """).format(
+            sql.Identifier(get_table())
+        ))
 
         conn.commit()
 
@@ -205,13 +218,13 @@ class AdmissionResult:
         """Return the count of all admission results in the database."""
         where_clause, params = _build_where_clause(where)
 
-        with get_connection().cursor() as cur:
-            cur.execute(
-                f"""
-                SELECT COUNT(*) from admissions_info {where_clause};
-            """,
-                params,
+        with postgres_manager.get_connection().cursor() as cur:
+            query = sql.SQL("SELECT COUNT(*) FROM {} {};").format(
+                sql.Identifier(get_table()),
+                sql.SQL(where_clause)
             )
+
+            cur.execute(query, params)
 
             return cur.fetchone()[0]  # type: ignore
 
@@ -219,16 +232,18 @@ class AdmissionResult:
     @classmethod
     def execute_raw(cls, query, params):
         """Execute a raw SQL query and returns the results as a list of dictionaries."""
-        with get_connection().cursor(row_factory=psycopg.rows.dict_row) as cur:
+        with postgres_manager.get_connection().cursor(row_factory=psycopg.rows.dict_row) as cur:
             return cur.execute(query, params).fetchall()
 
     @classmethod
     def get_latest_id(cls):
         """Retrieve the highest existing admission ID from the database."""
-        with get_connection().cursor() as cur:
-            cur.execute("""
-                SELECT MAX(p_id) FROM admissions_info;
-            """)
+        with postgres_manager.get_connection().cursor() as cur:
+            query = sql.SQL("SELECT MAX(p_id) FROM {};").format(
+                sql.Identifier(get_table()),
+            )
+
+            cur.execute(query)
 
             result = cur.fetchone()
 
@@ -356,13 +371,12 @@ class AdmissionResult:
 
     def save_to_db(self):
         """Save the AdmissionResult instance to the database."""
-        conn = get_connection()
+        conn = postgres_manager.get_connection()
 
         try:
             with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    INSERT INTO admissions_info (
+                cur.execute(sql.SQL("""
+                    INSERT INTO {} (
                         p_id, school, program_name, program, comments, date_added, url,
                         status, decision_date, season, year, term, us_or_international,
                         gpa, gre, gre_v, gre_aw, degree,
@@ -391,32 +405,32 @@ class AdmissionResult:
                         degree = EXCLUDED.degree,
                         llm_generated_program = EXCLUDED.llm_generated_program,
                         llm_generated_university = EXCLUDED.llm_generated_university;
-                """,
-                    (
-                        self.id,
-                        self.school,
-                        self.program_name,
-                        # Redundant but the assignment calls for it
-                        f"{self.school} {self.program_name}",
-                        self.comments,
-                        self.added_on,
-                        self.full_info_url,
-                        self.decision_status,
-                        self.decision_date,
-                        self.season,
-                        self.year,
-                        # Redundant but the assignment calls for it
-                        f"{self.season} {self.year}",
-                        self.applicant_region,
-                        self.gpa,
-                        self.gre_general,
-                        self.gre_verbal,
-                        self.gre_analytical_writing,
-                        self.degree_type,
-                        self.llm_generated_program,
-                        self.llm_generated_university,
-                    ),
-                )
+                """).format(
+                    sql.Identifier(get_table())
+                ), (
+                    self.id,
+                    self.school,
+                    self.program_name,
+                    # Redundant but the assignment calls for it
+                    f"{self.school} {self.program_name}",
+                    self.comments,
+                    self.added_on,
+                    self.full_info_url,
+                    self.decision_status,
+                    self.decision_date,
+                    self.season,
+                    self.year,
+                    # Redundant but the assignment calls for it
+                    f"{self.season} {self.year}",
+                    self.applicant_region,
+                    self.gpa,
+                    self.gre_general,
+                    self.gre_verbal,
+                    self.gre_analytical_writing,
+                    self.degree_type,
+                    self.llm_generated_program,
+                    self.llm_generated_university,
+                ))
 
             conn.commit()
         except Exception as e:
@@ -429,7 +443,7 @@ class AdmissionResult:
 
         print(f"Running cleaner on entry {self.id}: {program_and_school}")
 
-        result = call_llm(program_and_school)
+        result = clean.call_llm(program_and_school)
 
         print(f"Got cleaned fields: {result}")
 

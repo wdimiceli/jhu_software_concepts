@@ -18,14 +18,11 @@ import sys
 import psycopg
 
 
-DATA_DIR = "./pgdata"  # Directory where Postgres stores data
+DATA_DIR = "pgdata"  # Directory where Postgres stores data
 PG_PORT = 5432  # Port for Postgres server
 PG_USER = "student"  # Postgres user for the project
 PG_PASSWORD = "modernsoftwareconcepts"  # Postgres user password
 PG_DB = "admissions"  # Database name
-
-
-connection = None
 
 
 def check_postgres_installed():
@@ -53,9 +50,6 @@ def stop_postgres(process):
     """Terminate the PostgreSQL subprocess."""
     print("Stopping Postgres...")
 
-    if connection:
-        connection.close()
-
     process.terminate()
     process.wait()
 
@@ -82,12 +76,7 @@ def setup_user_and_db():
 
 def get_connection():
     """Create and return a psycopg connection to the project database."""
-    global connection
-
-    if not connection:
-        connection = psycopg.connect(dbname=PG_DB, user=PG_USER, host="localhost", port=PG_PORT)
-
-    return connection
+    return psycopg.connect(dbname=PG_DB, user=PG_USER, host="localhost", port=PG_PORT)
 
 
 def start_postgres():

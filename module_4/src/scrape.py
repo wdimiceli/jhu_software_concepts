@@ -9,11 +9,11 @@ The main components:
 """
 
 import re
+import urllib3
 from itertools import pairwise
 from urllib.parse import ParseResult as ParsedURL
 from urllib.parse import urlparse
-from urllib.request import Request, urlopen
-from urllib.robotparser import RobotFileParser
+import urllib.robotparser
 
 from bs4 import BeautifulSoup
 from bs4.element import Tag
@@ -22,7 +22,7 @@ from model import AdmissionResult
 
 def _check_robots_permission(url: ParsedURL, user_agent: str) -> bool:
     """Check that the given user agent has permission to crawl the URL."""
-    robots_file_parser = RobotFileParser()
+    robots_file_parser = urllib.robotparser.RobotFileParser()
 
     robots_file_parser.set_url(f"https://{url.hostname}/robots.txt")
     robots_file_parser.read()
@@ -57,7 +57,6 @@ def scrape_page(page: int):
     user_agent = "WesBot/1.0"
     # Construct the URL for the specific page
     url = urlparse("https://www.thegradcafe.com/survey/?page=" + str(page))
-    request = Request(url.geturl(), headers={"User-Agent": user_agent})
 
     # Check to ensure we have permission before continuing.
     if not _check_robots_permission(url, user_agent):
@@ -66,27 +65,33 @@ def scrape_page(page: int):
         )
 
     # Get the HTML response and process it with BS.
-    with urlopen(request) as response:
-        html = response.read().decode("utf-8")
-        soup = BeautifulSoup(html, "html.parser")
+    http = urllib3.PoolManager()
+    response = http.request(
+        "GET",
+        url.geturl(),
+        headers={"User-Agent": user_agent},
+    )
+    html = response.data.decode("utf-8")
+    # print(html)
+    soup = BeautifulSoup(html, "html.parser")
 
-        # Parse each group of rows into an AdmissionResult object
-        admission_results: list[AdmissionResult] = [
-            AdmissionResult.from_soup(row) for row in _get_table_rows(soup)
-        ]
+    # Parse each group of rows into an AdmissionResult object
+    admission_results: list[AdmissionResult] = [
+        AdmissionResult.from_soup(row) for row in _get_table_rows(soup)
+    ]
 
-        # Get all the anchor tags that point to other pages and parse out the page number.
-        page_links = [
-            int(str(anchor["href"]).split("=")[1])
-            # Finds <a/> elements with href="?page=123"
-            for anchor in soup.find_all("a", href=re.compile(r".*\?page=\d+$"))
-            if isinstance(anchor, Tag)
-        ]
+    # Get all the anchor tags that point to other pages and parse out the page number.
+    page_links = [
+        int(str(anchor["href"]).split("=")[1])
+        # Finds <a/> elements with href="?page=123"
+        for anchor in soup.find_all("a", href=re.compile(r".*\?page=\d+$"))
+        if isinstance(anchor, Tag)
+    ]
 
-        # If we have links and one of them is a higher page number, then we have more to parse.
-        has_more_pages = bool(page_links) and max(page_links) > page
+    # If we have links and one of them is a higher page number, then we have more to parse.
+    has_more_pages = bool(page_links) and max(page_links) > page
 
-        return admission_results, has_more_pages
+    return admission_results, has_more_pages
 
 
 def scrape_data(page: int, limit: int | None = None, stop_at_id: int | None = None):

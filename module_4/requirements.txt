@@ -5,5 +5,7 @@ llama-cpp-python
 psycopg[binary]
 pytest
 pytest-cov
+pytest-mock
 sphinx
 sphinx-rtd-theme
+urllib3

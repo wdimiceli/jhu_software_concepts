@@ -9,7 +9,7 @@ import threading
 import scrape
 from flask import Blueprint, render_template, request
 from query_data import answer_questions
-from model import AdmissionResult
+import model
 
 
 blueprint_name = "grad_data"
@@ -36,7 +36,7 @@ def begin_refresh():
     scrape_state["running"] = True
 
     try:
-        latest_id = AdmissionResult.get_latest_id()
+        latest_id = model.AdmissionResult.get_latest_id()
         print(f"Latest id: {latest_id}")
 
         entries = scrape.scrape_data(1, 30000, latest_id)
@@ -45,9 +45,7 @@ def begin_refresh():
             entry.clean_and_augment()
             entry.save_to_db()
 
-        scrape_state["running"] = False
         scrape_state["entries"] = entries
-
     finally:
         scrape_state["running"] = False
 
@@ -64,10 +62,12 @@ def analysis():
     refresh = "refresh" in request.args
     poll = "poll" in request.args
 
-    if request.method == "POST":
-        if not scrape_state["running"]:
-            threading.Thread(target=begin_refresh, daemon=True).start()
+    if (request.method == "POST" or refresh) and scrape_state["running"]:
+        return "Conflict occurred", 409
 
+    if request.method == "POST" and not scrape_state["running"]:
+        threading.Thread(target=begin_refresh, daemon=True).start()
+        
     # Get the list of questions and their pre-calculated answers.
     props = {
         "questions": answer_questions(),
