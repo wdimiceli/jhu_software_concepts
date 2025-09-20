@@ -6,10 +6,9 @@ from unittest.mock import patch, MagicMock
 from clean import _load_llm, _split_fallback, _best_match, _normalize_text, call_llm
 
 
-# Tests for _load_llm function
+@pytest.mark.db
 @patch("clean._LLM", None)
 @patch("clean.hf_hub_download")
-@pytest.mark.db
 @patch("clean.Llama")
 def test_load_llm_first_time(mock_llama, mock_hf_download):
     """Test _load_llm when loading for the first time."""
@@ -28,7 +27,6 @@ def test_load_llm_first_time(mock_llama, mock_hf_download):
     assert result == mock_llama_instance
 
 
-# Tests for _split_fallback function
 @pytest.mark.db
 def test_split_fallback_basic():
     """Test basic program, university splitting."""
@@ -120,7 +118,6 @@ def test_best_match_empty_input():
     assert _best_match(None, ["test"]) is None
 
 
-# Tests for _normalize_text function
 @pytest.mark.db
 @patch("clean.NORMALIZATION_RULES")
 def test_normalize_text_program_common_fix(mock_rules):
@@ -142,8 +139,8 @@ def test_normalize_text_program_canonical(mock_rules):
     assert result == "Computer Science"
 
 
-@patch("clean.NORMALIZATION_RULES")
 @pytest.mark.db
+@patch("clean.NORMALIZATION_RULES")
 @patch("clean._best_match")
 def test_normalize_text_program_fuzzy_match(mock_best_match, mock_rules):
     """Test fuzzy matching for programs."""
@@ -153,8 +150,8 @@ def test_normalize_text_program_fuzzy_match(mock_best_match, mock_rules):
     assert result == "Computer Science"
 
 
-@patch("clean.NORMALIZATION_RULES")
 @pytest.mark.db
+@patch("clean.NORMALIZATION_RULES")
 @patch("clean._best_match")
 def test_normalize_text_program_no_match(mock_best_match, mock_rules):
     """Test program with no match."""
@@ -197,8 +194,8 @@ def test_normalize_text_university_canonical(mock_rules):
     assert result == "McGill University"
 
 
-@patch("clean.NORMALIZATION_RULES")
 @pytest.mark.db
+@patch("clean.NORMALIZATION_RULES")
 @patch("clean._best_match")
 def test_normalize_text_university_fuzzy_match(mock_best_match, mock_rules):
     """Test fuzzy matching for universities."""
@@ -212,8 +209,8 @@ def test_normalize_text_university_fuzzy_match(mock_best_match, mock_rules):
     assert result == "Stanford University"
 
 
-@patch("clean.NORMALIZATION_RULES")
 @pytest.mark.db
+@patch("clean.NORMALIZATION_RULES")
 @patch("clean._best_match")
 def test_normalize_text_university_no_match(mock_best_match, mock_rules):
     """Test university with no match."""
@@ -230,8 +227,8 @@ def test_normalize_text_university_empty():
     assert result == "Unknown"
 
 
-@patch("clean.NORMALIZATION_RULES")
 @pytest.mark.db
+@patch("clean.NORMALIZATION_RULES")
 @patch("clean._best_match")
 def test_normalize_text_university_normalize_of(mock_best_match, mock_rules):
     """Test normalization of 'Of' to 'of'."""
@@ -241,8 +238,8 @@ def test_normalize_text_university_normalize_of(mock_best_match, mock_rules):
     assert result == "University of Toronto"
 
 
-@patch("clean._load_llm")
 @pytest.mark.db
+@patch("clean._load_llm")
 @patch("clean._normalize_text")
 def test_call_llm_partial_json_extraction(mock_normalize, mock_load_llm):
     """Test LLM call with JSON embedded in text."""

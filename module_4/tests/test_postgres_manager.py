@@ -112,7 +112,7 @@ def test_start_postgres_eventual_success(mocker):
     mock_process = MagicMock()
     mocker.patch("subprocess.Popen", return_value=mock_process)
     mocker.patch("atexit.register")
-    mock_setup = mocker.patch("postgres_manager.setup_user_and_db")
+    mocker.patch("postgres_manager.setup_user_and_db")
     mocker.patch("builtins.print")
     mocker.patch("time.sleep", lambda x: None)
     side_effects = [psycopg.OperationalError(), psycopg.OperationalError(), MagicMock()]
