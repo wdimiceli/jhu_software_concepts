@@ -27,6 +27,7 @@ def start(data_filename: str | None = None):
     """Start up the development server."""
     start_postgres()
 
+    data_filename = data_filename or os.environ.get("DATA_FILE")
     if data_filename:
         load_data.load_admissions_results(data_filename)
 
