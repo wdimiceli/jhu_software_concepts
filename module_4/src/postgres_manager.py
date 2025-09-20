@@ -37,13 +37,7 @@ def init_db():
     if not os.path.exists(DATA_DIR):
         print(f"Data directory '{DATA_DIR}' not found. Initializing...")
 
-        result = subprocess.run(["initdb", "-D", DATA_DIR, "-U", PG_USER])
-
-        if result.returncode != 0:
-            print("Failed to initialize Postgres data directory.")
-            sys.exit(1)
-
-        print("Postgres data directory initialized.")
+        subprocess.run(["initdb", "-D", DATA_DIR, "-U", PG_USER])
 
 
 def stop_postgres(process):

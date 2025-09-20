@@ -4,8 +4,8 @@ import os
 from flask import Flask
 from blueprints.portfolio.routes import bp as portfolio
 from blueprints.grad_data.routes import bp as grad_data
-
 from postgres_manager import start_postgres
+import load_data
 
 
 def create_app():
@@ -23,19 +23,12 @@ def create_app():
     return app
 
 
-def start():
+def start(data_filename: str | None = None):
     """Start up the development server."""
     start_postgres()
-    
-    # Load data on startup if enabled
-    if os.getenv('LOAD_DATA_ON_STARTUP', 'true').lower() == 'true':
-        try:
-            from load_data import load_data_if_available
-            load_data_if_available()
-        except ImportError as e:
-            print(f"Could not import data loading module: {e}")
-        except Exception as e:
-            print(f"Data loading failed during startup: {e}")
+
+    if data_filename:
+        load_data.load_admissions_results(data_filename)
 
     # Create the main Flask application instance for production.
     root_app = create_app()

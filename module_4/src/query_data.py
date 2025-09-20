@@ -7,10 +7,7 @@ def safe_format(value, fmt="{:.2f}"):
     """Format a value safely, returning 'N/A' for None."""
     if value is None:
         return "N/A"
-    try:
-        return fmt.format(value)
-    except (ValueError, TypeError):
-        return str(value)
+    return fmt.format(value)
 
 
 def answer_questions():

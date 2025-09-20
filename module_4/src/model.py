@@ -23,22 +23,11 @@ def get_table():
     return str(os.environ.get("DB_TABLE", DB_TABLE))
 
 
-def init_tables(recreate=False):
+def init_tables():
     """Initialize the postgres tables for storing the admissions scrape data."""
     conn = postgres_manager.get_connection()
 
     with conn.cursor() as cur:
-        if recreate:
-            print("Dropping tables and recreating...")
-
-            cur.execute(sql.SQL("""
-                DROP TABLE IF EXISTS {};
-            """).format(
-                sql.Identifier(get_table())
-            ))
-
-            conn.commit()
-
         cur.execute(sql.SQL("""
             CREATE TABLE IF NOT EXISTS {} (
                 p_id INTEGER PRIMARY KEY,
@@ -150,12 +139,7 @@ def _decision_from_soup(decision_str: str, added_on_year: int):
     status = match.group("status").lower().replace(" ", "_")
     date_part = match.group("date_str")
 
-    # Try to parse with the date it was added with
-    try:
-        parsed_date = datetime.strptime(f"{date_part} {added_on_year}", "%d %b %Y")
-    except ValueError:
-        print(f"Failed to parse date string: {date_part}")
-        return status, None
+    parsed_date = datetime.strptime(f"{date_part} {added_on_year}", "%d %b %Y")
 
     today = datetime.now()
 
@@ -172,22 +156,6 @@ def _decision_from_soup(decision_str: str, added_on_year: int):
     date = parsed_date.replace(year=year)
 
     return status, date
-
-
-def _build_where_clause(where={}):
-    """Given a set of key/value pairs, builds a WHERE clause for a SQL query."""
-    params = []
-    columns = []
-
-    for key, value in where.items():
-        if value is not None:
-            columns.append(f"{key}=%s")
-            params.append(value)
-
-    if columns:
-        return f"\nWHERE {' AND '.join(columns)}", params
-
-    return "", []
 
 
 @dataclass
@@ -214,17 +182,14 @@ class AdmissionResult:
     llm_generated_university: str | None
 
     @classmethod
-    def count(cls, where={}):
+    def count(cls):
         """Return the count of all admission results in the database."""
-        where_clause, params = _build_where_clause(where)
-
         with postgres_manager.get_connection().cursor() as cur:
-            query = sql.SQL("SELECT COUNT(*) FROM {} {};").format(
-                sql.Identifier(get_table()),
-                sql.SQL(where_clause)
+            query = sql.SQL("SELECT COUNT(*) FROM {};").format(
+                sql.Identifier(get_table())
             )
 
-            cur.execute(query, params)
+            cur.execute(query)
 
             return cur.fetchone()[0]  # type: ignore
 
@@ -247,10 +212,7 @@ class AdmissionResult:
 
             result = cur.fetchone()
 
-            if result:
-                return result[0]
-
-            return 0
+            return result[0] if result else None
 
 
     @classmethod
@@ -261,10 +223,9 @@ class AdmissionResult:
         single admission entry in the HTML table and constructs an `AdmissionResult`
         dataclass instance from it.
         """
-        table_columns, tags, comments_row, *_ = table_row + [None, None, None]
-
-        # We need at least one element or something is wrong
-        assert isinstance(table_columns, Tag)
+        table_columns = table_row[0] if len(table_row) > 0 else None
+        tags = table_row[1] if len(table_row) > 1 else None
+        comments_row = table_row[2] if len(table_row) > 2 else None
 
         tags = _tags_from_soup(
             set(map(lambda tag: tag.text.strip(), tags.find_all(class_="tw-inline-flex")))
@@ -273,53 +234,33 @@ class AdmissionResult:
         )
 
         # Unpack table columns
-        school, program, added_on, decision, *_ = map(
-            lambda column: column.text.strip(), table_columns.find_all("td")
-        )
+        tds = table_columns.find_all("td")
+        school = tds[0].text.strip() if len(tds) > 0 else ''
+        program = tds[1].text.strip() if len(tds) > 1 else ''
+        added_on = tds[2].text.strip() if len(tds) > 2 else ''
+        decision = tds[3].text.strip() if len(tds) > 3 else ''
 
         added_on = datetime.strptime(added_on, "%B %d, %Y") if added_on else None
 
-        # Process decision values from the appropriate table column.
-        try:
-            # Do the best we can finding which year to use as the date for the decision.
-            decision_year = (added_on.year if added_on else tags["year"]) or datetime.now().year
+        # Do the best we can finding which year to use as the date for the decision.
+        decision_year = (added_on.year if added_on else tags["year"]) or datetime.now().year
 
-            decision_status, decision_date = _decision_from_soup(decision, decision_year)
-        except ValueError:
-            # Sometimes these are missing or have invalid formatting, so we None this field.
-            print(f"Failed to process decision: {decision}... skipping")
-            decision_status, decision_date = None, None
+        decision_status, decision_date = _decision_from_soup(decision, decision_year)
 
         comments: str = comments_row.text.strip() if comments_row else ""
 
         # Program and degree type are separated by an SVG element, which manifests as a set of
         # newlines when BS extracts the text from it.
         program_name, degree_type, *_ = re.split(r"\n{2,}", program) + [None, None]
-
-        if not isinstance(program_name, str):
-            program_name = None
-
-        try:
-            if not degree_type:
-                degree_type = None
-            else:
-                degree_type = degree_type.lower()
-        except ValueError:
-            print(f"Failed to process degree type: {degree_type}... skipping")
-            degree_type = None
+        degree_type = degree_type.lower()
 
         # Each entry should have a link to the full info page -- we grab that and use it to
         # find the entry's true ID value, which resides in the URL for it.
         full_info_anchor_element = table_columns.find("a", href=re.compile(r"^/result"))
-        if not isinstance(full_info_anchor_element, Tag):
-            raise RuntimeError("Failed to find result anchor")
-
         full_info_url = str(full_info_anchor_element["href"])
 
         # Here, hrefs should always be in the form `/result/{id}`
         id_match = re.search(r".+\/(?P<id>\d+)$", full_info_url)
-        if id_match is None:
-            raise RuntimeError("anchor href for admission result is unrecognized")
 
         id: int = int(id_match.group("id"))
 
@@ -361,81 +302,67 @@ class AdmissionResult:
             decision_date=decision_date,
         )
 
-        if "program" in values:
-            del values["program"]
-        if "term" in values:
-            del values["term"]
-
         return AdmissionResult(**values)
 
 
-    def save_to_db(self):
+    def save_to_db(self, cursor):
         """Save the AdmissionResult instance to the database."""
-        conn = postgres_manager.get_connection()
-
-        try:
-            with conn.cursor() as cur:
-                cur.execute(sql.SQL("""
-                    INSERT INTO {} (
-                        p_id, school, program_name, program, comments, date_added, url,
-                        status, decision_date, season, year, term, us_or_international,
-                        gpa, gre, gre_v, gre_aw, degree,
-                        llm_generated_program, llm_generated_university
-                    )
-                    VALUES (
-                        %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
-                        %s,%s, %s, %s, %s, %s, %s, %s, %s, %s
-                    )
-                    ON CONFLICT (p_id) DO UPDATE SET
-                        school = EXCLUDED.school,
-                        program_name = EXCLUDED.program_name,
-                        comments = EXCLUDED.comments,
-                        date_added = EXCLUDED.date_added,
-                        url = EXCLUDED.url,
-                        status = EXCLUDED.status,
-                        decision_date = EXCLUDED.decision_date,
-                        season = EXCLUDED.season,
-                        year = EXCLUDED.year,
-                        term = EXCLUDED.term,
-                        us_or_international = EXCLUDED.us_or_international,
-                        gpa = EXCLUDED.gpa,
-                        gre = EXCLUDED.gre,
-                        gre_v = EXCLUDED.gre_v,
-                        gre_aw = EXCLUDED.gre_aw,
-                        degree = EXCLUDED.degree,
-                        llm_generated_program = EXCLUDED.llm_generated_program,
-                        llm_generated_university = EXCLUDED.llm_generated_university;
-                """).format(
-                    sql.Identifier(get_table())
-                ), (
-                    self.id,
-                    self.school,
-                    self.program_name,
-                    # Redundant but the assignment calls for it
-                    f"{self.school} {self.program_name}",
-                    self.comments,
-                    self.added_on,
-                    self.full_info_url,
-                    self.decision_status,
-                    self.decision_date,
-                    self.season,
-                    self.year,
-                    # Redundant but the assignment calls for it
-                    f"{self.season} {self.year}",
-                    self.applicant_region,
-                    self.gpa,
-                    self.gre_general,
-                    self.gre_verbal,
-                    self.gre_analytical_writing,
-                    self.degree_type,
-                    self.llm_generated_program,
-                    self.llm_generated_university,
-                ))
-
-            conn.commit()
-        except Exception as e:
-            print(f"Failed to save entry with id {self.id}")
-            raise e
+        cursor.execute(sql.SQL("""
+            INSERT INTO {} (
+                p_id, school, program_name, program, comments, date_added, url,
+                status, decision_date, season, year, term, us_or_international,
+                gpa, gre, gre_v, gre_aw, degree,
+                llm_generated_program, llm_generated_university
+            )
+            VALUES (
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                %s,%s, %s, %s, %s, %s, %s, %s, %s, %s
+            )
+            ON CONFLICT (p_id) DO UPDATE SET
+                school = EXCLUDED.school,
+                program_name = EXCLUDED.program_name,
+                comments = EXCLUDED.comments,
+                date_added = EXCLUDED.date_added,
+                url = EXCLUDED.url,
+                status = EXCLUDED.status,
+                decision_date = EXCLUDED.decision_date,
+                season = EXCLUDED.season,
+                year = EXCLUDED.year,
+                term = EXCLUDED.term,
+                us_or_international = EXCLUDED.us_or_international,
+                gpa = EXCLUDED.gpa,
+                gre = EXCLUDED.gre,
+                gre_v = EXCLUDED.gre_v,
+                gre_aw = EXCLUDED.gre_aw,
+                degree = EXCLUDED.degree,
+                llm_generated_program = EXCLUDED.llm_generated_program,
+                llm_generated_university = EXCLUDED.llm_generated_university;
+        """).format(
+            sql.Identifier(get_table())
+        ), (
+            self.id,
+            self.school,
+            self.program_name,
+            # Redundant but the assignment calls for it
+            f"{self.school} {self.program_name}",
+            self.comments,
+            self.added_on,
+            self.full_info_url,
+            self.decision_status,
+            self.decision_date,
+            self.season,
+            self.year,
+            # Redundant but the assignment calls for it
+            f"{self.season} {self.year}",
+            self.applicant_region,
+            self.gpa,
+            self.gre_general,
+            self.gre_verbal,
+            self.gre_analytical_writing,
+            self.degree_type,
+            self.llm_generated_program,
+            self.llm_generated_university,
+        ))
 
     def clean_and_augment(self):
         """Process the school and program and apply cleaned fields."""

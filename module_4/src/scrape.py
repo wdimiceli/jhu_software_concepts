@@ -72,13 +72,16 @@ def scrape_page(page: int):
         headers={"User-Agent": user_agent},
     )
     html = response.data.decode("utf-8")
-    # print(html)
     soup = BeautifulSoup(html, "html.parser")
 
     # Parse each group of rows into an AdmissionResult object
-    admission_results: list[AdmissionResult] = [
-        AdmissionResult.from_soup(row) for row in _get_table_rows(soup)
-    ]
+    admission_results: list[AdmissionResult] = []
+
+    for row in _get_table_rows(soup):
+        try:
+            admission_results.append(AdmissionResult.from_soup(row) )
+        except Exception as e:
+            print("Error parsing row:", e)
 
     # Get all the anchor tags that point to other pages and parse out the page number.
     page_links = [

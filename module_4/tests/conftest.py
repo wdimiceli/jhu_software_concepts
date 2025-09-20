@@ -88,86 +88,6 @@ def runner(app):
     return app.test_cli_runner()
 
 
-# @pytest.fixture
-# def mock_database_write():
-#     """Mock database operations for unit tests."""
-#     with patch("postgres_manager.get_connection") as mock_conn:
-#         mock_cursor = MagicMock()
-#         mock_conn.return_value.cursor.return_value.__enter__.return_value = mock_cursor
-#         mock_cursor.fetchall.return_value = []
-#         yield mock_cursor
-
-
-# @pytest.fixture
-# def mock_admission_result(mocker):
-#     """Create a fake AdmissionResult for testing."""
-#     from model import AdmissionResult
-
-#     def create_fake_admission_result(
-#         id_val=1,
-#         school="Test University",
-#         program="Computer Science",
-#         status="accepted",
-#         region="american",
-#         gpa=3.8,
-#         gre=320,
-#     ):
-#         result = AdmissionResult(
-#             id=id_val,
-#             school=school,
-#             program_name=program,
-#             degree_type="masters",
-#             added_on=datetime(2024, 1, 1),
-#             decision_status=status,
-#             decision_date=datetime(2024, 2, 1),
-#             season="fall",
-#             year=2025,
-#             applicant_region=region,
-#             gre_general=gre,
-#             gre_verbal=160,
-#             gre_analytical_writing=4.5,
-#             gpa=gpa,
-#             comments="Great program!",
-#             full_info_url=f"/result/{id_val}",
-#             llm_generated_program=None,
-#             llm_generated_university=None,
-#         )
-
-#         # mocker.patch.object(result, "clean_and_augment")
-
-#         # def fake_save_to_db():
-#         #     mock_database_write.execute("INSERT INTO fake_table ...")
-
-#         # mocker.patch.object(result, "save_to_db", fake_save_to_db)
-
-#         return result
-
-#     return {
-#         "create_fake_admission_result": create_fake_admission_result,
-#     }
-
-
-# @pytest.fixture
-# def mock_scraper(mocker, mock_admission_result):
-#     """Mock scraper that returns fake admission results."""
-#     fake_scrape_results = [
-#         mock_admission_result["create_fake_admission_result"](
-#             1, "Test University", "Computer Science", "accepted", "american", 3.8, 320
-#         ),
-#         mock_admission_result["create_fake_admission_result"](
-#             2, "Elite Tech Institute", "Data Science", "rejected", "international", 3.9, 335
-#         ),
-#         mock_admission_result["create_fake_admission_result"](
-#             3, "State University", "Electrical Engineering", "waitlisted", "american", 3.6, 315
-#         ),
-#     ]
-
-#     return {
-#         "scrape_data": mocker.patch("scrape.scrape_data", return_value=fake_scrape_results),
-#         "fake_results": fake_scrape_results,
-#     }
-
-
 @pytest.fixture
 def mock_answer_questions():
     """Mock answer_questions to return properly formatted data."""
@@ -180,15 +100,7 @@ def mock_llm(mocker):
     mock_llm_instance = mocker.Mock()
 
     # Define a fake response
-    fake_response = {
-        "choices": [
-            {
-                "message": {
-                    "content": "Mocked response text"
-                }
-            }
-        ]
-    }
+    fake_response = {"choices": [{"message": {"content": "Mocked response text"}}]}
 
     # Mock the method to return the fake response
     mock_llm_instance.create_chat_completion.return_value = fake_response

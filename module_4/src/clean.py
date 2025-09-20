@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+from pathlib import Path
 import re
 import difflib
 from typing import Dict, List, Tuple
@@ -22,8 +23,8 @@ N_GPU_LAYERS = 0  # CPU-only
 
 
 # Canonical data files
-CANON_UNIS_PATH = "canon_universities.txt"
-CANON_PROGS_PATH = "canon_programs.txt"
+CANON_UNIS_PATH = Path(__file__).parent / "canon_universities.txt"
+CANON_PROGS_PATH = Path(__file__).parent / "canon_programs.txt"
 
 
 # JSON pattern matcher
@@ -33,15 +34,12 @@ JSON_OBJ_RE = re.compile(r"\{.*?\}", re.DOTALL)
 # ---------------- Consolidated canonical data ----------------
 def _read_lines(path: str) -> List[str]:
     """Read non-empty, stripped lines from a file (UTF-8)."""
-    try:
-        with open(path, "r", encoding="utf-8") as f:
-            return [ln.strip() for ln in f if ln.strip()]
-    except FileNotFoundError:
-        return []
+    with open(path, "r", encoding="utf-8") as f:
+        return [ln.strip() for ln in f if ln.strip()]
 
 
-CANON_UNIS = _read_lines(CANON_UNIS_PATH)
-CANON_PROGS = _read_lines(CANON_PROGS_PATH)
+CANON_UNIS = _read_lines(str(CANON_UNIS_PATH))
+CANON_PROGS = _read_lines(str(CANON_PROGS_PATH))
 
 
 # Consolidated normalization rules
@@ -112,24 +110,23 @@ _LLM: Llama | None = None
 def _load_llm() -> Llama:
     """Download and initialize the LLM model."""
     global _LLM
-    if _LLM is not None:
-        return _LLM
+    if _LLM is None:
+        model_path = hf_hub_download(
+            repo_id=MODEL_REPO,
+            filename=MODEL_FILE,
+            local_dir="models",
+            local_dir_use_symlinks=False,
+            force_filename=MODEL_FILE,
+        )
 
-    model_path = hf_hub_download(
-        repo_id=MODEL_REPO,
-        filename=MODEL_FILE,
-        local_dir="models",
-        local_dir_use_symlinks=False,
-        force_filename=MODEL_FILE,
-    )
+        _LLM = Llama(
+            model_path=model_path,
+            n_ctx=N_CTX,
+            n_threads=N_THREADS,
+            n_gpu_layers=N_GPU_LAYERS,
+            verbose=False,
+        )
 
-    _LLM = Llama(
-        model_path=model_path,
-        n_ctx=N_CTX,
-        n_threads=N_THREADS,
-        n_gpu_layers=N_GPU_LAYERS,
-        verbose=False,
-    )
     return _LLM
 
 

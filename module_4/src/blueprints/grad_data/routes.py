@@ -10,6 +10,7 @@ import scrape
 from flask import Blueprint, render_template, request
 from query_data import answer_questions
 import model
+import postgres_manager
 
 
 blueprint_name = "grad_data"
@@ -41,9 +42,13 @@ def begin_refresh():
 
         entries = scrape.scrape_data(1, 30000, latest_id)
 
-        for entry in entries:
-            entry.clean_and_augment()
-            entry.save_to_db()
+        conn = postgres_manager.get_connection()
+        with conn.cursor() as cursor:
+            for entry in entries:
+                entry.clean_and_augment()
+                entry.save_to_db(cursor)
+
+        conn.commit()
 
         scrape_state["entries"] = entries
     finally:
