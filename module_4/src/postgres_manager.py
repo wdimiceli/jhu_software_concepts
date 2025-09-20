@@ -19,6 +19,9 @@ PG_PORT = int(os.getenv("PG_PORT", 5432))         # Port for Postgres server
 PG_USER = os.getenv("PG_USER", "student")         # Postgres user for the project
 PG_DB = os.getenv("PG_DB", "admissions")          # Database name
 
+# Per assignment instructions
+PG_HOST = PG_HOST or os.getenv("DATABASE_URL")
+
 
 def check_postgres_installed():
     """Check if the required PostgreSQL binaries ('postgres' and 'initdb') are installed."""
