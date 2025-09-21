@@ -6,6 +6,7 @@
 __pycache__/
 .coverage
 _build
+htmlcov
 
 # Virtual environment
 venv/
