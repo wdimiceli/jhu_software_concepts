@@ -146,10 +146,10 @@ def test_postgres_connection():
             print("Postgres is ready.")
             break
         except psycopg.OperationalError:
-            print("Waiting for Postgres to start...")
+            print("Waiting for Postgres connection...")
             time.sleep(1)
     else:
-        print("Error: Postgres did not start after 15 seconds.")
+        print("Error: Could not connect to Postgres after 15 seconds.")
         sys.exit(1)
 
 
@@ -185,4 +185,4 @@ def start_postgres() -> subprocess.Popen:
 
 def check_and_configure_postgres():
     """Check postgres connection and start local server if needed."""
-    return start_postgres() if PG_HOST == 'localhost' else test_postgres_connection()
+    return start_postgres() if "DATABASE_URL" not in os.environ else test_postgres_connection()
