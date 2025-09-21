@@ -19,6 +19,19 @@ Installation
 
     pip install -r requirements.txt
 
+Database Configuration
+----------------------
+
+**Using DATABASE_URL (recommended)**::
+
+    export DATABASE_URL=postgresql://user:password@host:port/database
+    PYTHONPATH=src python -c "import run;run.start()"
+
+**Using default settings**::
+
+    PYTHONPATH=src python -c "import run;run.start()"
+    # Uses: postgresql://student@localhost:5432/admissions
+
 Running the Application
 -----------------------
 
@@ -50,15 +63,13 @@ Running Tests
 Environment Variables
 ---------------------
 
-PostgreSQL configuration:
+**Database Configuration**
 
-* ``DATABASE_URL``: Host for Postgres server
-* ``PG_PORT``: Port for Postgres server
-* ``PG_USER``: Postgres user for the project
-* ``PG_DB``: Database name
+* ``DATABASE_URL``: PostgreSQL connection string (default: postgresql://student@localhost:5432/admissions)
 
-Data loading:
+**Other Configuration**
 
+* ``PG_DATA_DIR``: Local PostgreSQL data directory (default: pgdata)
 * ``DATA_FILE``: Path to JSON file for initial data load
 
 Project Structure

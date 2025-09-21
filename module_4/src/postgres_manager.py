@@ -11,16 +11,56 @@ import shutil
 import sys
 import psycopg
 from psycopg import sql
+from urllib.parse import urlparse
 
 
-DATA_DIR = os.getenv("PG_DATA_DIR", "pgdata")     # Directory where Postgres stores data
-PG_HOST = os.getenv("PG_HOST", "localhost")       # Host for Postgres server
-PG_PORT = int(os.getenv("PG_PORT", 5432))         # Port for Postgres server
-PG_USER = os.getenv("PG_USER", "student")         # Postgres user for the project
-PG_DB = os.getenv("PG_DB", "admissions")          # Database name
+def parse_database_url(database_url: str) -> dict:
+    """Parse DATABASE_URL into connection components.
+    
+    :param database_url: PostgreSQL connection URL in format postgresql://user:password@host:port/database
+    :type database_url: str
+    :returns: Dictionary with connection parameters
+    :rtype: dict
+    """
+    parsed = urlparse(database_url)
+    return {
+        'host': parsed.hostname or 'localhost',
+        'port': parsed.port or 5432,
+        'user': parsed.username or 'student',
+        'password': parsed.password,
+        'database': parsed.path.lstrip('/') if parsed.path else 'admissions'
+    }
 
-# Per assignment instructions
-PG_HOST = PG_HOST or os.getenv("DATABASE_URL")
+
+# Configuration using DATABASE_URL or defaults
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://student@localhost:5432/admissions")
+db_config = parse_database_url(DATABASE_URL)
+
+PG_HOST = db_config['host']
+PG_PORT = int(db_config['port'])
+PG_USER = db_config['user']
+PG_PASSWORD = db_config['password']
+PG_DB = db_config['database']
+
+# Data directory for local PostgreSQL server
+DATA_DIR = os.getenv("PG_DATA_DIR", "pgdata")
+
+
+def get_connection_params(dbname: str | None = None) -> dict:
+    """Build PostgreSQL connection parameters.
+    
+    :param dbname: Database name (defaults to PG_DB)
+    :type dbname: str | None
+    :returns: Connection parameters dictionary
+    :rtype: dict
+    """
+    return {
+        'dbname': dbname or PG_DB,
+        'user': PG_USER,
+        'host': PG_HOST,
+        'port': PG_PORT,
+        'password': PG_PASSWORD
+    }
 
 
 def check_postgres_installed() -> None:
@@ -59,7 +99,7 @@ def setup_user_and_db() -> None:
     :raises psycopg.Error: If database connection or creation fails.
     """
     # Connect as default 'postgres' user
-    conn = psycopg.connect(dbname="postgres", user=PG_USER, host=PG_HOST, port=PG_PORT)
+    conn = psycopg.connect(**get_connection_params('postgres'))
     conn.autocommit = True
     cur = conn.cursor()
 
@@ -85,7 +125,7 @@ def get_connection():
     :rtype: psycopg.Connection
     :raises psycopg.Error: If connection fails.
     """
-    return psycopg.connect(dbname=PG_DB, user=PG_USER, host=PG_HOST, port=PG_PORT)
+    return psycopg.connect(**get_connection_params())
 
 
 def start_postgres() -> subprocess.Popen:
@@ -113,7 +153,7 @@ def start_postgres() -> subprocess.Popen:
     # Wait until Postgres is ready to accept connections
     for i in range(15):  # try for up to 15 seconds
         try:
-            conn = psycopg.connect(dbname="postgres", user=PG_USER, host=PG_HOST, port=PG_PORT)
+            conn = psycopg.connect(**get_connection_params('postgres'))
             conn.close()
             print("Postgres is ready.")
             break

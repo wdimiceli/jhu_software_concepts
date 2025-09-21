@@ -21,15 +21,19 @@ Quick Start
     source venv/bin/activate
     pip install -r requirements.txt
 
-2. **Run Application**::
+2. **Configure Database** (optional)::
+
+    export DATABASE_URL=postgresql://user:password@host:port/database
+
+3. **Run Application**::
 
     PYTHONPATH=src python -c "import run;run.start()"
 
-3. **Load Data** (optional)::
+4. **Load Data** (optional)::
 
     PYTHONPATH=src DATA_FILE=src/admissions_info.json python -c "import run;run.start()"
 
-4. **Run Tests**::
+5. **Run Tests**::
 
     PYTHONPATH=src pytest -m "web or buttons or analysis or db or integration" --cov=src --cov-report=html
 
