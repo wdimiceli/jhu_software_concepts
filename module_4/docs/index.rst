@@ -38,21 +38,3 @@ Quick Start
     PYTHONPATH=src pytest -m "web or buttons or analysis or db or integration" --cov=src --cov-report=html
 
 Application available at http://localhost:8080
-
-Documentation
--------------
-
-.. toctree::
-   :maxdepth: 1
-   
-   setup
-   architecture
-   api
-   testing
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
