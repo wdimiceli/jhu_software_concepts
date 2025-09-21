@@ -1,0 +1,54 @@
+Graduate Admissions Data Analysis
+==================================
+
+Flask application for scraping and analyzing TheGradCafe.com data.
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+   
+   setup
+   architecture
+   api
+   testing
+
+Quick Start
+-----------
+
+1. **Install Dependencies**::
+
+    python -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+
+2. **Run Application**::
+
+    PYTHONPATH=src python -c "import run;run.start()"
+
+3. **Load Data** (optional)::
+
+    PYTHONPATH=src DATA_FILE=src/admissions_info.json python -c "import run;run.start()"
+
+4. **Run Tests**::
+
+    PYTHONPATH=src pytest -m "web or buttons or analysis or db or integration" --cov=src --cov-report=html
+
+Application available at http://localhost:8080
+
+Documentation
+-------------
+
+.. toctree::
+   :maxdepth: 1
+   
+   setup
+   architecture
+   api
+   testing
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
