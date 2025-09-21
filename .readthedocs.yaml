@@ -9,5 +9,10 @@ build:
   tools:
     python: "3.11"
 
+
+python:
+  install:
+    - requirements: requirements-docs.txt
+
 sphinx:
    configuration: module_4/docs/conf.py
