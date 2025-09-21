@@ -66,10 +66,10 @@ def test_stop_postgres(mocker):
 
 
 # ------------------------
-# setup_user_and_db
+# setup_db
 # ------------------------
 @pytest.mark.db
-def test_setup_user_and_db(mocker):
+def test_setup_db(mocker):
     """Test database and user creation when database doesn't exist."""
     mock_conn = MagicMock()
     mock_cursor = MagicMock()
@@ -77,9 +77,9 @@ def test_setup_user_and_db(mocker):
     mock_cursor.fetchone.return_value = None
     mocker.patch("psycopg.connect", return_value=mock_conn)
     mocker.patch("builtins.print")
-    from postgres_manager import setup_user_and_db
+    from postgres_manager import setup_db
 
-    setup_user_and_db()
+    setup_db()
 
 
 # ------------------------
@@ -105,7 +105,7 @@ def test_start_postgres_timeout(mocker):
     mock_process = MagicMock()
     mocker.patch("subprocess.Popen", return_value=mock_process)
     mocker.patch("atexit.register")
-    mocker.patch("postgres_manager.setup_user_and_db")  # fully mock to prevent real DB calls
+    mocker.patch("postgres_manager.setup_db")  # fully mock to prevent real DB calls
     mocker.patch("psycopg.connect", side_effect=psycopg.OperationalError())
     mocker.patch("time.sleep", lambda x: None)
     mocker.patch("sys.exit")
@@ -123,7 +123,7 @@ def test_start_postgres_eventual_success(mocker):
     mock_process = MagicMock()
     mocker.patch("subprocess.Popen", return_value=mock_process)
     mocker.patch("atexit.register")
-    mocker.patch("postgres_manager.setup_user_and_db")
+    mocker.patch("postgres_manager.setup_db")
     mocker.patch("builtins.print")
     mocker.patch("time.sleep", lambda x: None)
     side_effects = [psycopg.OperationalError(), psycopg.OperationalError(), MagicMock()]

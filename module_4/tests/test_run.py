@@ -8,7 +8,7 @@ from run import start
 @pytest.mark.web
 def test_start(mocker):
     """Test application startup without data file loading."""
-    mocker.patch("run.start_postgres")
+    mocker.patch("run.check_and_configure_postgres")
     mock_app = MagicMock()
     mocker.patch("run.create_app", return_value=mock_app)
 
@@ -20,7 +20,7 @@ def test_start(mocker):
 @pytest.mark.web
 def test_start_with_data_file(mocker):
     """Test application startup with data file loading."""
-    mocker.patch("run.start_postgres")
+    mocker.patch("run.check_and_configure_postgres")
     mock_load = mocker.patch("run.load_data.load_admissions_results")
     mock_app = MagicMock()
     mocker.patch("run.create_app", return_value=mock_app)

@@ -93,7 +93,7 @@ def stop_postgres(process: subprocess.Popen) -> None:
     process.wait()
 
 
-def setup_user_and_db() -> None:
+def setup_db() -> None:
     """Create project database if it doesn't exist.
     
     :raises psycopg.Error: If database connection or creation fails.
@@ -128,6 +128,31 @@ def get_connection():
     return psycopg.connect(**get_connection_params())
 
 
+def test_postgres_connection():
+    """Test PostgreSQL server connectivity with retry logic.
+    
+    Attempts to establish a connection to the PostgreSQL server for up to 15 seconds
+    with 1-second intervals between attempts. This function is typically used during
+    startup to ensure the database server is ready before proceeding with application
+    initialization.
+    
+    :raises SystemExit: If PostgreSQL server is not accessible after 15 seconds
+    """
+    # Wait until Postgres is ready to accept connections
+    for i in range(15):  # try for up to 15 seconds
+        try:
+            conn = psycopg.connect(**get_connection_params('postgres'))
+            conn.close()
+            print("Postgres is ready.")
+            break
+        except psycopg.OperationalError:
+            print("Waiting for Postgres to start...")
+            time.sleep(1)
+    else:
+        print("Error: Postgres did not start after 15 seconds.")
+        sys.exit(1)
+
+
 def start_postgres() -> subprocess.Popen:
     """Start PostgreSQL server process.
     
@@ -150,22 +175,14 @@ def start_postgres() -> subprocess.Popen:
 
     atexit.register(stop_postgres, process)  # Ensure graceful shutdown
 
-    # Wait until Postgres is ready to accept connections
-    for i in range(15):  # try for up to 15 seconds
-        try:
-            conn = psycopg.connect(**get_connection_params('postgres'))
-            conn.close()
-            print("Postgres is ready.")
-            break
-        except psycopg.OperationalError:
-            print("Waiting for Postgres to start...")
-            time.sleep(1)
-    else:
-        print("Error: Postgres did not start after 15 seconds.")
-        process.terminate()
-        sys.exit(1)
+    test_postgres_connection()
 
     # Ensure project user and database exist
-    setup_user_and_db()
+    setup_db()
 
     return process
+
+
+def check_and_configure_postgres():
+    """Check postgres connection and start local server if needed."""
+    return start_postgres() if PG_HOST == 'localhost' else test_postgres_connection()

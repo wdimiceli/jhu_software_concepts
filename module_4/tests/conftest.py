@@ -18,7 +18,16 @@ test_table_name = "test_admission_results"
 
 
 def pytest_configure(config):
-    postgres_manager.start_postgres()
+    """Configure pytest test session setup.
+    
+    Pytest hook that runs once at the start of the test session to initialize
+    the test environment. Sets up PostgreSQL database, creates necessary tables,
+    and configures environment variables for testing.
+    
+    :param config: Pytest configuration object
+    :type config: pytest.Config
+    """
+    postgres_manager.check_and_configure_postgres()
     model.init_tables()
     os.environ["DB_TABLE"] = test_table_name
 

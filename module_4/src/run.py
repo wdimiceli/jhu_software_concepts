@@ -8,7 +8,7 @@ import os
 from flask import Flask
 from blueprints.portfolio.routes import bp as portfolio
 from blueprints.grad_data.routes import bp as grad_data
-from postgres_manager import start_postgres
+from postgres_manager import check_and_configure_postgres
 import load_data
 
 
@@ -39,7 +39,7 @@ def start(data_filename: str | None = None) -> None:
     :param data_filename: Path to JSON file with admissions data. Uses DATA_FILE env var if None.
     :type data_filename: str or None
     """
-    start_postgres()
+    check_and_configure_postgres()
 
     data_filename = data_filename or os.environ.get("DATA_FILE")
     if data_filename:
