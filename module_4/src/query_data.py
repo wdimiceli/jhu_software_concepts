@@ -1,17 +1,29 @@
-"""A collection of predefined database queries for the admissions data."""
+"""Predefined database queries for admissions data analysis."""
 
 from model import AdmissionResult, get_table
 
 
-def safe_format(value, fmt="{:.2f}"):
-    """Format a value safely, returning 'N/A' for None."""
+def safe_format(value, fmt: str = "{:.2f}") -> str:
+    """Format value safely, returning 'N/A' for None.
+    
+    :param value: Value to format.
+    :param fmt: Format string.
+    :type fmt: str
+    :returns: Formatted string or 'N/A'.
+    :rtype: str
+    """
     if value is None:
         return "N/A"
     return fmt.format(value)
 
 
-def answer_questions():
-    """Return a list of questions and their corresponding SQL-based answers."""
+def answer_questions() -> list[dict]:
+    """Execute predefined queries and return formatted results.
+    
+    :returns: List of dictionaries with prompt, answer, and formatted fields.
+    :rtype: list[dict]
+    :raises psycopg.Error: If database query fails.
+    """
     queries = [
         {
             "prompt": "How many entries do you have in your database who have applied for Fall 2025?",

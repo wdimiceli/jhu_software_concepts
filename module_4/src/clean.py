@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
-"""Flask + tiny local LLM standardizer - simplified for school project."""
+"""Data cleaning and standardization using local LLM.
+
+Standardizes university and program names using TinyLlama model with fuzzy matching
+and pattern-based normalization.
+"""
 
 from __future__ import annotations
 
@@ -14,7 +18,7 @@ from huggingface_hub import hf_hub_download
 from llama_cpp import Llama
 
 
-# ---------------- Simplified Model config ----------------
+# ---------------- Model configuration ----------------
 MODEL_REPO = "TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF"
 MODEL_FILE = "tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf"
 N_THREADS = os.cpu_count() or 2
@@ -31,9 +35,17 @@ CANON_PROGS_PATH = Path(__file__).parent / "canon_programs.txt"
 JSON_OBJ_RE = re.compile(r"\{.*?\}", re.DOTALL)
 
 
-# ---------------- Consolidated canonical data ----------------
+# ---------------- Canonical data loading ----------------
 def _read_lines(path: str) -> List[str]:
-    """Read non-empty, stripped lines from a file (UTF-8)."""
+    """Read non-empty lines from file.
+    
+    :param path: Path to text file.
+    :type path: str
+    :returns: List of non-empty lines.
+    :rtype: List[str]
+    :raises FileNotFoundError: If file doesn't exist.
+    :raises IOError: If file can't be read.
+    """
     with open(path, "r", encoding="utf-8") as f:
         return [ln.strip() for ln in f if ln.strip()]
 
@@ -108,7 +120,12 @@ _LLM: Llama | None = None
 
 
 def _load_llm() -> Llama:
-    """Download and initialize the LLM model."""
+    """Download and initialize LLM model.
+    
+    :returns: Initialized LLM model instance.
+    :rtype: Llama
+    :raises Exception: If model download or initialization fails.
+    """
     global _LLM
     if _LLM is None:
         model_path = hf_hub_download(
@@ -131,7 +148,13 @@ def _load_llm() -> Llama:
 
 
 def _split_fallback(text: str) -> Tuple[str, str]:
-    """Simple fallback parser when LLM returns non-JSON."""
+    """Parse text when LLM returns non-JSON response.
+    
+    :param text: Input text to parse.
+    :type text: str
+    :returns: Tuple of (program_name, university_name).
+    :rtype: Tuple[str, str]
+    """
     s = re.sub(r"\s+", " ", (text or "")).strip().strip(",")
     parts = [p.strip() for p in re.split(r",| at | @ ", s) if p.strip()]
     prog = parts[0] if parts else ""
@@ -164,7 +187,17 @@ def _split_fallback(text: str) -> Tuple[str, str]:
 
 
 def _best_match(name: str, candidates: List[str], cutoff: float = 0.86) -> str | None:
-    """Fuzzy match using difflib."""
+    """Find best fuzzy match using difflib.
+    
+    :param name: Name to match.
+    :type name: str
+    :param candidates: List of canonical names.
+    :type candidates: List[str]
+    :param cutoff: Minimum similarity threshold.
+    :type cutoff: float
+    :returns: Best matching name or None.
+    :rtype: str | None
+    """
     if not name or not candidates:
         return None
     matches = difflib.get_close_matches(name, candidates, n=1, cutoff=cutoff)
@@ -172,7 +205,15 @@ def _best_match(name: str, candidates: List[str], cutoff: float = 0.86) -> str |
 
 
 def _normalize_text(text: str, text_type: str) -> str:
-    """Unified normalization for both programs and universities."""
+    """Normalize text using rules for programs or universities.
+    
+    :param text: Text to normalize.
+    :type text: str
+    :param text_type: Type - "programs" or "universities".
+    :type text_type: str
+    :returns: Normalized text.
+    :rtype: str
+    """
     rules = NORMALIZATION_RULES[text_type]
     normalized = (text or "").strip()
     expanded = False
@@ -215,7 +256,14 @@ def _normalize_text(text: str, text_type: str) -> str:
 
 
 def call_llm(program_text: str) -> Dict[str, str]:
-    """Query the LLM and return standardized fields."""
+    """Standardize program and university names using LLM.
+    
+    :param program_text: Input text with program and university.
+    :type program_text: str
+    :returns: Dictionary with standardized_program and standardized_university keys.
+    :rtype: Dict[str, str]
+    :raises Exception: If LLM processing fails.
+    """
     llm = _load_llm()
 
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]

@@ -1,15 +1,19 @@
-"""A data loader for TheGradCafe scraper.
-
-This module provides functionality to load scraped admissions data into a PostgreSQL database.
-"""
+"""Load admissions data from JSON files into PostgreSQL database."""
 
 import json
 from model import AdmissionResult, init_tables
 import postgres_manager
 
 
-def load_admissions_results(filename: str):
-    """Read admissions data from disk and loads it into the database."""
+def load_admissions_results(filename: str) -> None:
+    """Load admissions data from JSON file into database.
+    
+    :param filename: Path to JSON file with admission result data.
+    :type filename: str
+    :raises FileNotFoundError: If JSON file doesn't exist.
+    :raises json.JSONDecodeError: If file contains invalid JSON.
+    :raises psycopg.Error: If database operations fail.
+    """
     init_tables()
 
     print("Beginning data ingestion...")

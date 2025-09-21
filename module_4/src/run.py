@@ -1,4 +1,8 @@
-"""Main application entry point for the web server."""
+"""Flask application factory and startup functions.
+
+Creates Flask app with portfolio and graduate data analysis blueprints.
+Handles PostgreSQL database initialization and JSON data loading.
+"""
 
 import os
 from flask import Flask
@@ -8,8 +12,12 @@ from postgres_manager import start_postgres
 import load_data
 
 
-def create_app():
-    """Create and configure the Flask application."""
+def create_app() -> Flask:
+    """Create Flask application with registered blueprints.
+
+    :returns: Configured Flask application instance.
+    :rtype: Flask
+    """
     app = Flask(__name__)
     
     # Register the blueprint for the portfolio section.
@@ -23,8 +31,14 @@ def create_app():
     return app
 
 
-def start(data_filename: str | None = None):
-    """Start up the development server."""
+def start(data_filename: str | None = None) -> None:
+    """Start development server with database initialization.
+
+    Starts PostgreSQL, loads data if specified, creates Flask app, and runs server.
+
+    :param data_filename: Path to JSON file with admissions data. Uses DATA_FILE env var if None.
+    :type data_filename: str or None
+    """
     start_postgres()
 
     data_filename = data_filename or os.environ.get("DATA_FILE")

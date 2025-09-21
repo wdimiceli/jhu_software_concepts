@@ -1,3 +1,5 @@
+"""Tests for the analysis page, verify answer labels and formatting."""
+
 import pytest
 import re
 

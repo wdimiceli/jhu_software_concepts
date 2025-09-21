@@ -1,6 +1,6 @@
-"""Routes for a simple portfolio website.
+"""Flask blueprint for portfolio website routes.
 
-This blueprint handles the core navigation of a personal or portfolio site.
+Static page routes for portfolio sections: home, contact, and projects.
 """
 
 from flask import Blueprint, render_template
@@ -19,17 +19,29 @@ bp = Blueprint(
 
 @bp.route("/")
 def home():
-    """Render the homepage HTML template."""
+    """Render portfolio homepage.
+    
+    :returns: Rendered HTML template.
+    :rtype: str
+    """
     return render_template("home.html")
 
 
 @bp.route("/contact")
 def contact():
-    """Render the contact page HTML template."""
+    """Render contact page.
+    
+    :returns: Rendered HTML template.
+    :rtype: str
+    """
     return render_template("contact.html")
 
 
 @bp.route("/projects")
 def projects():
-    """Render the projects page HTML template."""
+    """Render projects page.
+    
+    :returns: Rendered HTML template.
+    :rtype: str
+    """
     return render_template("projects.html")

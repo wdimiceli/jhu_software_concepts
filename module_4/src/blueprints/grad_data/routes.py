@@ -1,8 +1,7 @@
-"""Routes for displaying and analyzing graduate admissions data.
+"""Flask blueprint for graduate admissions data analysis routes.
 
-This blueprint handles all web routes related to the admissions data
-summary and analysis pages. It fetches data from the database, processes
-it for display, and renders the corresponding HTML templates.
+This blueprint provides web routes for displaying and analyzing graduate
+admissions data.
 """
 
 import threading
@@ -30,8 +29,11 @@ scrape_state = {
 }
 
 
-def begin_refresh():
-    """Scrape new data and save to the database."""
+def begin_refresh() -> None:
+    """Execute background data scraping and database updates.
+    
+    Updates global scrape_state to track progress.
+    """
     global scrape_state
 
     scrape_state["running"] = True
@@ -57,10 +59,10 @@ def begin_refresh():
 
 @bp.route("/analysis", methods=["GET", "POST"])
 def analysis():
-    """Render the admissions data analysis HTML template.
+    """Render admissions data analysis dashboard.
 
-    This function fetches a predefined set of questions and their answers from
-    the `query_data` module and passes them to the `analysis.html` template.
+    :returns: Rendered HTML template or HTTP error response.
+    :rtype: str
     """
     global scrape_state
 

@@ -1,7 +1,4 @@
-"""Data models and database interaction for TheGradCafe scraper.
-
-The `AdmissionResult` class serves as the primary model for an admissions record.
-"""
+"""Data models and database operations for admission results."""
 
 import os
 import psycopg
@@ -18,13 +15,20 @@ import postgres_manager
 
 DB_TABLE = "admissions_info"
 
-def get_table():
-    """"""
+def get_table() -> str:
+    """Get database table name.
+    
+    :returns: Table name from DB_TABLE env var or default.
+    :rtype: str
+    """
     return str(os.environ.get("DB_TABLE", DB_TABLE))
 
 
-def init_tables():
-    """Initialize the postgres tables for storing the admissions scrape data."""
+def init_tables() -> None:
+    """Create admissions table if it doesn't exist.
+    
+    :raises psycopg.Error: If table creation fails.
+    """
     conn = postgres_manager.get_connection()
 
     with conn.cursor() as cur:
@@ -58,11 +62,13 @@ def init_tables():
         conn.commit()
 
 
-def _tags_from_soup(tags: set[str]):
-    """Unpacks a set of tag values from a admission result entry.
+def _tags_from_soup(tags: set[str]) -> dict[str, any]:
+    """Parse HTML tags to extract admission data.
 
-    Parses a set of string tags from the HTML and extracts structured information
-    like application year, season, region, and test scores.
+    :param tags: Set of tag strings from HTML.
+    :type tags: set[str]
+    :returns: Dictionary with parsed season, year, region, and test scores.
+    :rtype: dict[str, any]
     """
     expanded = {
         "season": None,
@@ -125,8 +131,16 @@ def _tags_from_soup(tags: set[str]):
     return expanded
 
 
-def _decision_from_soup(decision_str: str, added_on_year: int):
-    """Parse a decision string and returns the status and date."""
+def _decision_from_soup(decision_str: str, added_on_year: int) -> tuple[str | None, datetime | None]:
+    """Parse decision string to extract status and date.
+
+    :param decision_str: Decision string in format "status on DD MMM".
+    :type decision_str: str
+    :param added_on_year: Year for date inference.
+    :type added_on_year: int
+    :returns: Tuple of (status, date).
+    :rtype: tuple[str | None, datetime | None]
+    """
     match = re.match(
         r"(?P<status>[A-Za-z\s]+?)\s+on\s+(?P<date_str>[0-9]+\s+[A-Za-z]+)$",
         decision_str,
@@ -160,7 +174,7 @@ def _decision_from_soup(decision_str: str, added_on_year: int):
 
 @dataclass
 class AdmissionResult:
-    """Represents a single entry from TheGradCafe."""
+    """Admission result data model with application details and test scores."""
 
     id: int
     school: str
@@ -182,8 +196,13 @@ class AdmissionResult:
     llm_generated_university: str | None
 
     @classmethod
-    def count(cls):
-        """Return the count of all admission results in the database."""
+    def count(cls) -> int:
+        """Count admission results in database.
+        
+        :returns: Total record count.
+        :rtype: int
+        :raises psycopg.Error: If query fails.
+        """
         with postgres_manager.get_connection().cursor() as cur:
             query = sql.SQL("SELECT COUNT(*) FROM {};").format(
                 sql.Identifier(get_table())
@@ -195,14 +214,28 @@ class AdmissionResult:
 
 
     @classmethod
-    def execute_raw(cls, query, params):
-        """Execute a raw SQL query and returns the results as a list of dictionaries."""
+    def execute_raw(cls, query: str, params: list) -> list[dict]:
+        """Execute raw SQL query.
+        
+        :param query: SQL query string.
+        :type query: str
+        :param params: Query parameters.
+        :type params: list
+        :returns: Query results as dictionaries.
+        :rtype: list[dict]
+        :raises psycopg.Error: If query fails.
+        """
         with postgres_manager.get_connection().cursor(row_factory=psycopg.rows.dict_row) as cur:
             return cur.execute(query, params).fetchall()
 
     @classmethod
-    def get_latest_id(cls):
-        """Retrieve the highest existing admission ID from the database."""
+    def get_latest_id(cls) -> int | None:
+        """Get highest admission ID from database.
+        
+        :returns: Highest ID or None.
+        :rtype: int | None
+        :raises psycopg.Error: If query fails.
+        """
         with postgres_manager.get_connection().cursor() as cur:
             query = sql.SQL("SELECT MAX(p_id) FROM {};").format(
                 sql.Identifier(get_table()),
@@ -216,12 +249,15 @@ class AdmissionResult:
 
 
     @classmethod
-    def from_soup(cls, table_row: list[Tag]):
-        """Create an AdmissionResult instance from a table row, scraped through BS4.
+    def from_soup(cls, table_row: list[Tag]) -> 'AdmissionResult':
+        """Create AdmissionResult from HTML table rows.
 
-        This method parses a list of BeautifulSoup `Tag` objects that represent a
-        single admission entry in the HTML table and constructs an `AdmissionResult`
-        dataclass instance from it.
+        :param table_row: List of BeautifulSoup Tag objects.
+        :type table_row: list[Tag]
+        :returns: New instance with extracted data.
+        :rtype: AdmissionResult
+        :raises ValueError: If HTML elements missing or malformed.
+        :raises AttributeError: If HTML structure unexpected.
         """
         table_columns = table_row[0] if len(table_row) > 0 else None
         tags = table_row[1] if len(table_row) > 1 else None
@@ -286,8 +322,14 @@ class AdmissionResult:
         )
 
     @classmethod
-    def from_dict(cls, plain: dict):
-        """Deserialize an AdmissionResult instance from a JSON-friendly dictionary."""
+    def from_dict(cls, plain: dict) -> 'AdmissionResult':
+        """Create AdmissionResult from dictionary.
+
+        :param plain: Dictionary with admission data.
+        :type plain: dict
+        :returns: New instance with converted datetime fields.
+        :rtype: AdmissionResult
+        """
         added_on = plain.get("added_on", None) or None
         if added_on:
             added_on = datetime.fromisoformat(added_on)
@@ -305,8 +347,12 @@ class AdmissionResult:
         return AdmissionResult(**values)
 
 
-    def save_to_db(self, cursor):
-        """Save the AdmissionResult instance to the database."""
+    def save_to_db(self, cursor) -> None:
+        """Save admission result to database using UPSERT.
+
+        :param cursor: Database cursor.
+        :raises psycopg.Error: If database operation fails.
+        """
         cursor.execute(sql.SQL("""
             INSERT INTO {} (
                 p_id, school, program_name, program, comments, date_added, url,
@@ -364,8 +410,11 @@ class AdmissionResult:
             self.llm_generated_university,
         ))
 
-    def clean_and_augment(self):
-        """Process the school and program and apply cleaned fields."""
+    def clean_and_augment(self) -> None:
+        """Apply LLM-based data cleaning.
+
+        :raises Exception: If LLM processing fails.
+        """
         program_and_school = f"{self.program_name}, {self.school}"
 
         print(f"Running cleaner on entry {self.id}: {program_and_school}")

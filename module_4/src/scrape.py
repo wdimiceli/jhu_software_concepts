@@ -1,11 +1,6 @@
-"""A web scraper for TheGradCafe.com, designed to extract and parse admissions data.
+"""Web scraper for TheGradCafe.com admissions data.
 
-This module provides functions to crawl the "Admissions Results" section of TheGradCafe.com.
-
-The main components:
-
-- `scrape_data`: The primary function that orchestrates the scraping process.
-- `scrape_page`: A helper function that handles the scraping of a single page.
+Scrapes admission results with robots.txt compliance and HTML parsing.
 """
 
 import re
@@ -21,7 +16,16 @@ from model import AdmissionResult
 
 
 def _check_robots_permission(url: ParsedURL, user_agent: str) -> bool:
-    """Check that the given user agent has permission to crawl the URL."""
+    """Check robots.txt permissions for scraping.
+    
+    :param url: Parsed URL to check.
+    :type url: ParsedURL
+    :param user_agent: User agent string.
+    :type user_agent: str
+    :returns: True if crawling permitted.
+    :rtype: bool
+    :raises Exception: If robots.txt can't be fetched.
+    """
     robots_file_parser = urllib.robotparser.RobotFileParser()
 
     robots_file_parser.set_url(f"https://{url.hostname}/robots.txt")
@@ -30,8 +34,15 @@ def _check_robots_permission(url: ParsedURL, user_agent: str) -> bool:
     return robots_file_parser.can_fetch(user_agent, str(url))
 
 
-def _get_table_rows(soup: BeautifulSoup):
-    """Parse HTML soup and return a list of table entries corresponding to admission results."""
+def _get_table_rows(soup: BeautifulSoup) -> list[list[Tag]]:
+    """Extract grouped table rows from HTML.
+    
+    :param soup: Parsed HTML document.
+    :type soup: BeautifulSoup
+    :returns: List of grouped table rows for admission entries.
+    :rtype: list[list[Tag]]
+    :raises AssertionError: If table structure not found.
+    """
     # Skip down to the first h1, which gets us roughly over the target.
     h1 = soup.find("h1")
     tbody = h1 and h1.find_next("tbody")
@@ -50,8 +61,16 @@ def _get_table_rows(soup: BeautifulSoup):
     return [rows[i:j] for i, j in pairwise(split_indices)]
 
 
-def scrape_page(page: int):
-    """Scrape a single page on TheGradCafe.com."""
+def scrape_page(page: int) -> tuple[list[AdmissionResult], bool]:
+    """Scrape admission results from single page.
+    
+    :param page: Page number to scrape (must be > 0).
+    :type page: int
+    :returns: Tuple of (admission results, has_more_pages).
+    :rtype: tuple[list[AdmissionResult], bool]
+    :raises Exception: If robots.txt check or HTTP request fails.
+    :raises AssertionError: If page number not positive.
+    """
     assert page > 0  # Sanity check
 
     user_agent = "WesBot/1.0"
@@ -97,8 +116,19 @@ def scrape_page(page: int):
     return admission_results, has_more_pages
 
 
-def scrape_data(page: int, limit: int | None = None, stop_at_id: int | None = None):
-    """Scrape iteratively from TheGradCafe, starting with the given page, up to the maximum."""
+def scrape_data(page: int, limit: int | None = None, stop_at_id: int | None = None) -> list[AdmissionResult]:
+    """Scrape admission results from multiple pages.
+    
+    :param page: Starting page number.
+    :type page: int
+    :param limit: Maximum results to collect.
+    :type limit: int | None
+    :param stop_at_id: Stop when this ID encountered.
+    :type stop_at_id: int | None
+    :returns: List of scraped admission results.
+    :rtype: list[AdmissionResult]
+    :raises Exception: If page scraping fails.
+    """
     pages_crawled = 0
     more_pages = True
 

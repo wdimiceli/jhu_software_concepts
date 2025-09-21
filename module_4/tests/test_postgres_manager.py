@@ -1,3 +1,5 @@
+"""Tests for PostgreSQL database management functionality."""
+
 import pytest
 from unittest.mock import MagicMock
 import psycopg
@@ -8,6 +10,7 @@ import psycopg
 # ------------------------
 @pytest.mark.db
 def test_check_postgres_installed(mocker):
+    """Test successful PostgreSQL binary detection."""
     mocker.patch("shutil.which", return_value="/usr/bin/postgres")
     from postgres_manager import check_postgres_installed
 
@@ -16,6 +19,7 @@ def test_check_postgres_installed(mocker):
 
 @pytest.mark.db
 def test_check_postgres_installed_missing(mocker):
+    """Test handling of missing PostgreSQL binaries."""
     mocker.patch("shutil.which", return_value=None)
     mocker.patch("sys.exit")
     mocker.patch("builtins.print")
@@ -29,6 +33,7 @@ def test_check_postgres_installed_missing(mocker):
 # ------------------------
 @pytest.mark.db
 def test_init_db(mocker):
+    """Test database initialization when data directory exists."""
     mocker.patch("os.path.exists", return_value=True)
     mocker.patch("subprocess.run")
     from postgres_manager import init_db
@@ -38,6 +43,7 @@ def test_init_db(mocker):
 
 @pytest.mark.db
 def test_init_db_create(mocker):
+    """Test database initialization with directory creation."""
     mocker.patch("os.path.exists", return_value=False)
     mocker.patch("subprocess.run", return_value=MagicMock(returncode=0))
     mocker.patch("builtins.print")
@@ -51,6 +57,7 @@ def test_init_db_create(mocker):
 # ------------------------
 @pytest.mark.db
 def test_stop_postgres(mocker):
+    """Test PostgreSQL server process termination."""
     mock_process = MagicMock()
     mocker.patch("builtins.print")
     from postgres_manager import stop_postgres
@@ -63,6 +70,7 @@ def test_stop_postgres(mocker):
 # ------------------------
 @pytest.mark.db
 def test_setup_user_and_db(mocker):
+    """Test database and user creation when database doesn't exist."""
     mock_conn = MagicMock()
     mock_cursor = MagicMock()
     mock_conn.cursor.return_value = mock_cursor
@@ -79,6 +87,7 @@ def test_setup_user_and_db(mocker):
 # ------------------------
 @pytest.mark.db
 def test_get_connection(mocker):
+    """Test database connection creation."""
     mocker.patch("psycopg.connect", return_value=MagicMock())
     from postgres_manager import get_connection
 
@@ -90,6 +99,7 @@ def test_get_connection(mocker):
 # ------------------------
 @pytest.mark.db
 def test_start_postgres_timeout(mocker):
+    """Test PostgreSQL startup timeout handling."""
     mocker.patch("postgres_manager.check_postgres_installed")
     mocker.patch("postgres_manager.init_db")
     mock_process = MagicMock()
@@ -107,6 +117,7 @@ def test_start_postgres_timeout(mocker):
 
 @pytest.mark.db
 def test_start_postgres_eventual_success(mocker):
+    """Test successful PostgreSQL startup after initial connection failures."""
     mocker.patch("postgres_manager.check_postgres_installed")
     mocker.patch("postgres_manager.init_db")
     mock_process = MagicMock()

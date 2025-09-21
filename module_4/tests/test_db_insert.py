@@ -1,8 +1,4 @@
-"""Tests for database writes and query operations.
-
-This module tests database insertion, idempotency constraints, and query
-functions to ensure data integrity and proper schema compliance.
-"""
+"""Tests for database writes and query operations."""
 
 import pytest
 from model import AdmissionResult, get_table

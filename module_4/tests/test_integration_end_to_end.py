@@ -1,8 +1,4 @@
-"""Integration tests for end-to-end flows.
-
-This module tests complete workflows from data pull through analysis update
-to final rendering, ensuring the entire system works together correctly.
-"""
+"""Integration tests for end-to-end flows."""
 
 import pytest
 import re
@@ -31,14 +27,10 @@ def test_end_to_end_pull_update_render(client, mock_scrape):
 
     assert page_text.count("Percent accepted: N/A") == 0
 
-    # # Must contain "Answer:" labels - should appear multiple times
-    # answer_count = page_text.count("A:")
-    # assert answer_count >= 1, "Page should contain at least one 'Answer:' label"
-
-    # # Find all percentages in the response
+    # Find all percentages in the response
     percentages = re.findall(r"\d+\.\d{2}%", page_text)
 
-    # # Should find at least some percentages
+    # Should find at least some percentages
     assert len(percentages) > 0, "Should find at least one percentage with two decimals"
 
 

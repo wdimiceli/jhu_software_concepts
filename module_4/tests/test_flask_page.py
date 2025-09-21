@@ -1,8 +1,4 @@
-"""Tests for Flask app factory, configuration, and page rendering.
-
-This module tests the core Flask application setup, route configuration,
-and the GET /analysis page rendering as required by the assignment.
-"""
+"""Tests for Flask app factory, configuration, and page rendering."""
 
 import pytest
 from bs4 import BeautifulSoup

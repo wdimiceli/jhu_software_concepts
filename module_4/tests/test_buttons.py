@@ -1,8 +1,4 @@
-"""Tests for button endpoints and busy-state behavior.
-
-This module tests the 'Pull Data' and 'Update Analysis' button functionality,
-including proper busy-state gating behavior as required by the assignment.
-"""
+"""Tests for button endpoints and busy-state behavior."""
 
 import pytest
 from unittest.mock import patch
@@ -15,7 +11,7 @@ from unittest.mock import patch
 
 @pytest.mark.buttons
 def test_post_pull_data_returns_200_and_triggers_loader(client, mocker, mock_scrape):
-    """"""
+    """Ensure POST /grad-data/analysis returns 200 and triggers the loader when not busy."""
     mocker.patch("model.AdmissionResult.get_latest_id", return_value=100)
 
     with patch("blueprints.grad_data.routes.scrape_state", {"running": False}):
@@ -30,7 +26,7 @@ def test_post_pull_data_returns_200_and_triggers_loader(client, mocker, mock_scr
 
 @pytest.mark.buttons
 def test_get_update_analysis_returns_200_when_not_busy(client, empty_table):
-    """"""
+    """Ensure GET /grad-data/analysis?refresh returns 200 when not busy."""
     with patch("blueprints.grad_data.routes.scrape_state", {"running": False}):
         response = client.get("/grad-data/analysis?refresh")
         assert response.status_code == 200
@@ -44,7 +40,7 @@ def test_get_update_analysis_returns_200_when_not_busy(client, empty_table):
 
 @pytest.mark.buttons
 def test_busy_gating_pull_data_button_disabled(client, mock_scrape):
-    """"""
+    """Ensure POST /grad-data/analysis returns 409 when a pull is already running."""
     with patch("blueprints.grad_data.routes.scrape_state", {"running": True}):
         response = client.post("/grad-data/analysis")
         assert response.status_code == 409
@@ -52,7 +48,7 @@ def test_busy_gating_pull_data_button_disabled(client, mock_scrape):
 
 @pytest.mark.buttons
 def test_busy_gating_update_analysis_button_disabled(client, empty_table):
-    """"""
+    """Ensure GET /grad-data/analysis?refresh returns 409 when a pull is already running."""
     with patch("blueprints.grad_data.routes.scrape_state", {"running": True}):
         response = client.get("/grad-data/analysis?refresh")
         assert response.status_code == 409

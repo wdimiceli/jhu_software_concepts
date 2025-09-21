@@ -1,3 +1,5 @@
+"""Tests for data model and HTML parsing functionality."""
+
 import pytest
 from datetime import datetime
 from model import _decision_from_soup, _tags_from_soup
@@ -5,7 +7,7 @@ from model import _decision_from_soup, _tags_from_soup
 
 @pytest.mark.db
 def test_decision_from_soup_invalid_format():
-    """Return None, None if decision string is unparsable."""
+    """Test decision parsing with malformed input string."""
     status, date = _decision_from_soup("INVALID DECISION", 2024)
     assert status is None
     assert date is None
@@ -13,7 +15,7 @@ def test_decision_from_soup_invalid_format():
 
 @pytest.mark.db
 def test_decision_from_soup_valid_date():
-    """Parse valid decision string correctly."""
+    """Test successful decision string parsing."""
     today_year = datetime.now().year
     status, date = _decision_from_soup("Accepted on 01 Jan", today_year)
     assert status == "accepted"
@@ -28,7 +30,7 @@ def test_decision_from_soup_valid_date():
 
 @pytest.mark.db
 def test_tags_from_soup_minimal():
-    """Return default values when empty set provided."""
+    """Test tag parsing with empty input."""
     result = _tags_from_soup(set())
     assert result["season"] is None
     assert result["year"] is None
@@ -37,7 +39,10 @@ def test_tags_from_soup_minimal():
 
 @pytest.mark.db
 def test_tags_from_soup_full():
-    """Parse season, year, region, GPA and GRE scores."""
+    """Test comprehensive tag parsing with all data types.
+    
+    Tests proper data type conversion (strings to floats/ints).
+    """
     tags = {"fall 23", "international", "gpa 3.5", "gre 320", "gre v 160", "gre aw 3.5"}
     result = _tags_from_soup(tags)
     assert result["season"] == "fall"
