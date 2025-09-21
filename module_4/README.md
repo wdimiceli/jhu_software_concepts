@@ -6,6 +6,8 @@
 
 This module extends the Grad Café Analytics system with automated testing using Pytest.
 
+Read The Docs: https://jhu-software-concepts-wdimiceli.readthedocs.io/
+
 ## Requirements
 
 * Python 3.10+
