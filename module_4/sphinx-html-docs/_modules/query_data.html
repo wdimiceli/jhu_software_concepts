@@ -1,0 +1,289 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>query_data &mdash; Grad Café Analytics 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Grad Café Analytics
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../setup.html">Setup and Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing.html">Testing Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Grad Café Analytics</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
+      <li class="breadcrumb-item active">query_data</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for query_data</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Predefined database queries for admissions data analysis.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">model</span><span class="w"> </span><span class="kn">import</span> <span class="n">AdmissionResult</span><span class="p">,</span> <span class="n">get_table</span>
+
+
+<div class="viewcode-block" id="safe_format">
+<a class="viewcode-back" href="../api.html#query_data.safe_format">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">safe_format</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">fmt</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{:.2f}</span><span class="s2">&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Format value safely, returning &#39;N/A&#39; for None.</span>
+<span class="sd">    </span>
+<span class="sd">    :param value: Value to format.</span>
+<span class="sd">    :param fmt: Format string.</span>
+<span class="sd">    :type fmt: str</span>
+<span class="sd">    :returns: Formatted string or &#39;N/A&#39;.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;N/A&quot;</span>
+    <span class="k">return</span> <span class="n">fmt</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="answer_questions">
+<a class="viewcode-back" href="../api.html#query_data.answer_questions">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">answer_questions</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Execute predefined queries and return formatted results.</span>
+<span class="sd">    </span>
+<span class="sd">    :returns: List of dictionaries with prompt, answer, and formatted fields.</span>
+<span class="sd">    :rtype: list[dict]</span>
+<span class="sd">    :raises psycopg.Error: If database query fails.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">queries</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;prompt&quot;</span><span class="p">:</span> <span class="s2">&quot;How many entries do you have in your database who have applied for Fall 2025?&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;answer&quot;</span><span class="p">:</span> <span class="n">AdmissionResult</span><span class="o">.</span><span class="n">execute_raw</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;SELECT COUNT(*) as count FROM </span><span class="si">{</span><span class="n">get_table</span><span class="p">()</span><span class="si">}</span><span class="s2"> WHERE year=%s AND season=%s;&quot;</span><span class="p">,</span>
+                <span class="p">(</span><span class="mi">2025</span><span class="p">,</span> <span class="s2">&quot;fall&quot;</span><span class="p">),</span>
+            <span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;count&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;formatted&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">result</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Applicant count: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;prompt&quot;</span><span class="p">:</span> <span class="s2">&quot;What percentage of entries are from international students?&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;answer&quot;</span><span class="p">:</span> <span class="n">AdmissionResult</span><span class="o">.</span><span class="n">execute_raw</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                SELECT intl_student_count * 100.0 / NULLIF(total, 0) as pct</span>
+<span class="s2">                FROM (</span>
+<span class="s2">                    SELECT</span>
+<span class="s2">                        COUNT(*) AS total,</span>
+<span class="s2">                        COUNT(*) FILTER (WHERE us_or_international=%s) as intl_student_count</span>
+<span class="s2">                    FROM </span><span class="si">{</span><span class="n">get_table</span><span class="p">()</span><span class="si">}</span>
+<span class="s2">                ) AS intl_students;</span>
+<span class="s2">            &quot;&quot;&quot;</span><span class="p">,</span>
+                <span class="p">[</span><span class="s2">&quot;international&quot;</span><span class="p">],</span>
+            <span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;pct&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;formatted&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">result</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Percent international: </span><span class="si">{</span><span class="n">safe_format</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;prompt&quot;</span><span class="p">:</span> <span class="s2">&quot;&quot;&quot;What is the average GPA, GRE, GRE V, GRE AW of applicants who provide these metrics?&quot;&quot;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;answer&quot;</span><span class="p">:</span> <span class="n">AdmissionResult</span><span class="o">.</span><span class="n">execute_raw</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                SELECT</span>
+<span class="s2">                    AVG(gpa) as avg_gpa,</span>
+<span class="s2">                    AVG(gre) as avg_gre,</span>
+<span class="s2">                    AVG(gre_v) as avg_gre_v,</span>
+<span class="s2">                    AVG(gre_aw) as avg_gre_aw</span>
+<span class="s2">                FROM </span><span class="si">{</span><span class="n">get_table</span><span class="p">()</span><span class="si">}</span><span class="s2">;</span>
+<span class="s2">            &quot;&quot;&quot;</span><span class="p">,</span>
+                <span class="p">[],</span>
+            <span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="s2">&quot;formatted&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">result</span><span class="p">:</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span>
+                <span class="sa">f</span><span class="s2">&quot;GPA: </span><span class="si">{</span><span class="n">safe_format</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;avg_gpa&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;GRE: </span><span class="si">{</span><span class="n">safe_format</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;avg_gre&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;GRE Verbal: </span><span class="si">{</span><span class="n">safe_format</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;avg_gre_v&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;GRE AW: </span><span class="si">{</span><span class="n">safe_format</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;avg_gre_aw&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">]),</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;prompt&quot;</span><span class="p">:</span> <span class="s2">&quot;What is the average GPA of American students in Fall 2025?&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;answer&quot;</span><span class="p">:</span> <span class="n">AdmissionResult</span><span class="o">.</span><span class="n">execute_raw</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                SELECT AVG(gpa) as avg_gpa</span>
+<span class="s2">                FROM </span><span class="si">{</span><span class="n">get_table</span><span class="p">()</span><span class="si">}</span>
+<span class="s2">                WHERE year=%s AND season=%s AND us_or_international != %s;</span>
+<span class="s2">            &quot;&quot;&quot;</span><span class="p">,</span>
+                <span class="p">[</span><span class="mi">2025</span><span class="p">,</span> <span class="s2">&quot;fall&quot;</span><span class="p">,</span> <span class="s2">&quot;international&quot;</span><span class="p">],</span>
+            <span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;avg_gpa&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;formatted&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">result</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Average GPA: </span><span class="si">{</span><span class="n">safe_format</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;prompt&quot;</span><span class="p">:</span> <span class="s2">&quot;What percent of entries for Fall 2025 are Acceptances?&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;answer&quot;</span><span class="p">:</span> <span class="n">AdmissionResult</span><span class="o">.</span><span class="n">execute_raw</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                SELECT accepted * 100.0 / NULLIF(total, 0) as pct</span>
+<span class="s2">                FROM (</span>
+<span class="s2">                    SELECT COUNT(*) AS total,</span>
+<span class="s2">                           COUNT(*) FILTER (WHERE status=%s) as accepted</span>
+<span class="s2">                    FROM </span><span class="si">{</span><span class="n">get_table</span><span class="p">()</span><span class="si">}</span>
+<span class="s2">                    WHERE year=%s AND season=%s</span>
+<span class="s2">                ) AS fall_2025_students;</span>
+<span class="s2">            &quot;&quot;&quot;</span><span class="p">,</span>
+                <span class="p">[</span><span class="s2">&quot;accepted&quot;</span><span class="p">,</span> <span class="mi">2025</span><span class="p">,</span> <span class="s2">&quot;fall&quot;</span><span class="p">],</span>
+            <span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;pct&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;formatted&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">result</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Percent accepted: </span><span class="si">{</span><span class="n">safe_format</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="si">}</span><span class="s2">%&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;prompt&quot;</span><span class="p">:</span> <span class="s2">&quot;What is the average GPA of applicants who applied for Fall 2025 who are Acceptances?&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;answer&quot;</span><span class="p">:</span> <span class="n">AdmissionResult</span><span class="o">.</span><span class="n">execute_raw</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                SELECT AVG(gpa) as avg_gpa</span>
+<span class="s2">                FROM </span><span class="si">{</span><span class="n">get_table</span><span class="p">()</span><span class="si">}</span>
+<span class="s2">                WHERE status=%s AND year=%s AND season=%s;</span>
+<span class="s2">            &quot;&quot;&quot;</span><span class="p">,</span>
+                <span class="p">[</span><span class="s2">&quot;accepted&quot;</span><span class="p">,</span> <span class="mi">2025</span><span class="p">,</span> <span class="s2">&quot;fall&quot;</span><span class="p">],</span>
+            <span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;avg_gpa&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;formatted&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">result</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Average GPA: </span><span class="si">{</span><span class="n">safe_format</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;prompt&quot;</span><span class="p">:</span> <span class="s2">&quot;How many entries are from applicants who applied to JHU for a masters degrees in Computer Science?&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;answer&quot;</span><span class="p">:</span> <span class="n">AdmissionResult</span><span class="o">.</span><span class="n">execute_raw</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                SELECT COUNT(*) as count</span>
+<span class="s2">                FROM </span><span class="si">{</span><span class="n">get_table</span><span class="p">()</span><span class="si">}</span>
+<span class="s2">                WHERE degree=%s AND llm_generated_university=%s AND llm_generated_program=%s;</span>
+<span class="s2">            &quot;&quot;&quot;</span><span class="p">,</span>
+                <span class="p">[</span><span class="s2">&quot;masters&quot;</span><span class="p">,</span> <span class="s2">&quot;Johns Hopkins University&quot;</span><span class="p">,</span> <span class="s2">&quot;Computer Science&quot;</span><span class="p">],</span>
+            <span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;count&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;formatted&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">result</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Applicant count: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;prompt&quot;</span><span class="p">:</span> <span class="s2">&quot;How many entries from 2025 are acceptances from applicants who applied to Georgetown University for a PhD in Computer Science?&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;answer&quot;</span><span class="p">:</span> <span class="n">AdmissionResult</span><span class="o">.</span><span class="n">execute_raw</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                SELECT COUNT(*) as count</span>
+<span class="s2">                FROM </span><span class="si">{</span><span class="n">get_table</span><span class="p">()</span><span class="si">}</span>
+<span class="s2">                WHERE degree=%s AND llm_generated_university=%s AND llm_generated_program=%s</span>
+<span class="s2">                      AND year=%s AND status=%s;</span>
+<span class="s2">            &quot;&quot;&quot;</span><span class="p">,</span>
+                <span class="p">[</span><span class="s2">&quot;phd&quot;</span><span class="p">,</span> <span class="s2">&quot;George Town University&quot;</span><span class="p">,</span> <span class="s2">&quot;Computer Science&quot;</span><span class="p">,</span> <span class="mi">2025</span><span class="p">,</span> <span class="s2">&quot;accepted&quot;</span><span class="p">],</span>
+            <span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;count&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;formatted&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">result</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Applicant count: </span><span class="si">{</span><span class="nb">str</span><span class="p">(</span><span class="n">result</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;prompt&quot;</span><span class="p">:</span> <span class="s2">&quot;What is the average GPA for students accepted to UCLA vs USC?&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;answer&quot;</span><span class="p">:</span> <span class="n">AdmissionResult</span><span class="o">.</span><span class="n">execute_raw</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                SELECT</span>
+<span class="s2">                    AVG(gpa) FILTER (WHERE llm_generated_university=%s) as avg_gpa_ucla,</span>
+<span class="s2">                    AVG(gpa) FILTER (WHERE llm_generated_university=%s) as avg_gpa_usc</span>
+<span class="s2">                FROM </span><span class="si">{</span><span class="n">get_table</span><span class="p">()</span><span class="si">}</span>
+<span class="s2">                WHERE status=%s;</span>
+<span class="s2">            &quot;&quot;&quot;</span><span class="p">,</span>
+                <span class="p">[</span><span class="s2">&quot;University of California, Los Angeles (Ucla)&quot;</span><span class="p">,</span> <span class="s2">&quot;University of Southern California&quot;</span><span class="p">,</span> <span class="s2">&quot;accepted&quot;</span><span class="p">],</span>
+            <span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="s2">&quot;formatted&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">result</span><span class="p">:</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span>
+                <span class="sa">f</span><span class="s2">&quot;UCLA average GPA: </span><span class="si">{</span><span class="n">safe_format</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;avg_gpa_ucla&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;USC average GPA: </span><span class="si">{</span><span class="n">safe_format</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;avg_gpa_usc&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">]),</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;prompt&quot;</span><span class="p">:</span> <span class="s2">&quot;What is the average GRE for students in the past 4 years?&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;answer&quot;</span><span class="p">:</span> <span class="n">AdmissionResult</span><span class="o">.</span><span class="n">execute_raw</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">                SELECT</span>
+<span class="s2">                    AVG(gre) FILTER (WHERE year=%s) as avg_gre_2021,</span>
+<span class="s2">                    AVG(gre) FILTER (WHERE year=%s) as avg_gre_2022,</span>
+<span class="s2">                    AVG(gre) FILTER (WHERE year=%s) as avg_gre_2023,</span>
+<span class="s2">                    AVG(gre) FILTER (WHERE year=%s) as avg_gre_2024</span>
+<span class="s2">                FROM </span><span class="si">{</span><span class="n">get_table</span><span class="p">()</span><span class="si">}</span><span class="s2">;</span>
+<span class="s2">            &quot;&quot;&quot;</span><span class="p">,</span>
+                <span class="p">[</span><span class="mi">2021</span><span class="p">,</span> <span class="mi">2022</span><span class="p">,</span> <span class="mi">2023</span><span class="p">,</span> <span class="mi">2024</span><span class="p">],</span>
+            <span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="s2">&quot;formatted&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">result</span><span class="p">:</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span>
+                <span class="sa">f</span><span class="s2">&quot;2021 average GRE: </span><span class="si">{</span><span class="n">safe_format</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;avg_gre_2021&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;2022 average GRE: </span><span class="si">{</span><span class="n">safe_format</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;avg_gre_2022&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;2023 average GRE: </span><span class="si">{</span><span class="n">safe_format</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;avg_gre_2023&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="sa">f</span><span class="s2">&quot;2024 average GRE: </span><span class="si">{</span><span class="n">safe_format</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;avg_gre_2024&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="p">]),</span>
+        <span class="p">},</span>
+    <span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">question</span> <span class="ow">in</span> <span class="n">queries</span><span class="p">:</span>
+        <span class="n">question</span><span class="p">[</span><span class="s2">&quot;formatted&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">question</span><span class="p">[</span><span class="s2">&quot;formatted&quot;</span><span class="p">](</span><span class="n">question</span><span class="p">[</span><span class="s2">&quot;answer&quot;</span><span class="p">])</span>
+
+    <span class="k">return</span> <span class="n">queries</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

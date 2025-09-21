@@ -1,0 +1,563 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>model &mdash; Grad Café Analytics 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=8d563738"></script>
+      <script src="../_static/doctools.js?v=9bcbadda"></script>
+      <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            Grad Café Analytics
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../setup.html">Setup and Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../architecture.html">Architecture</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../testing.html">Testing Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">Grad Café Analytics</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="index.html">Module code</a></li>
+      <li class="breadcrumb-item active">model</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for model</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Data models and database operations for admission results.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">psycopg</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">psycopg.rows</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">re</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">bs4.element</span><span class="w"> </span><span class="kn">import</span> <span class="n">Tag</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">psycopg</span><span class="w"> </span><span class="kn">import</span> <span class="n">sql</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">clean</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">postgres_manager</span>
+
+
+<span class="n">DB_TABLE</span> <span class="o">=</span> <span class="s2">&quot;admissions_info&quot;</span>
+
+<div class="viewcode-block" id="get_table">
+<a class="viewcode-back" href="../api.html#model.get_table">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_table</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Get database table name.</span>
+<span class="sd">    </span>
+<span class="sd">    :returns: Table name from DB_TABLE env var or default.</span>
+<span class="sd">    :rtype: str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;DB_TABLE&quot;</span><span class="p">,</span> <span class="n">DB_TABLE</span><span class="p">))</span></div>
+
+
+
+<div class="viewcode-block" id="init_tables">
+<a class="viewcode-back" href="../api.html#model.init_tables">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">init_tables</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Create admissions table if it doesn&#39;t exist.</span>
+<span class="sd">    </span>
+<span class="sd">    :raises psycopg.Error: If table creation fails.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">conn</span> <span class="o">=</span> <span class="n">postgres_manager</span><span class="o">.</span><span class="n">get_connection</span><span class="p">()</span>
+
+    <span class="k">with</span> <span class="n">conn</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cur</span><span class="p">:</span>
+        <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="o">.</span><span class="n">SQL</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">            CREATE TABLE IF NOT EXISTS </span><span class="si">{}</span><span class="s2"> (</span>
+<span class="s2">                p_id INTEGER PRIMARY KEY,</span>
+<span class="s2">                school TEXT,</span>
+<span class="s2">                program_name TEXT,</span>
+<span class="s2">                program TEXT,</span>
+<span class="s2">                comments TEXT,</span>
+<span class="s2">                date_added DATE,</span>
+<span class="s2">                url TEXT,</span>
+<span class="s2">                status TEXT,</span>
+<span class="s2">                decision_date DATE,</span>
+<span class="s2">                season TEXT,</span>
+<span class="s2">                year INTEGER,</span>
+<span class="s2">                term TEXT,</span>
+<span class="s2">                us_or_international TEXT,</span>
+<span class="s2">                gpa FLOAT,</span>
+<span class="s2">                gre FLOAT,</span>
+<span class="s2">                gre_v FLOAT,</span>
+<span class="s2">                gre_aw FLOAT,</span>
+<span class="s2">                degree TEXT,</span>
+<span class="s2">                llm_generated_program TEXT,</span>
+<span class="s2">                llm_generated_university TEXT</span>
+<span class="s2">            );</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">sql</span><span class="o">.</span><span class="n">Identifier</span><span class="p">(</span><span class="n">get_table</span><span class="p">())</span>
+        <span class="p">))</span>
+
+        <span class="n">conn</span><span class="o">.</span><span class="n">commit</span><span class="p">()</span></div>
+
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_tags_from_soup</span><span class="p">(</span><span class="n">tags</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse HTML tags to extract admission data.</span>
+
+<span class="sd">    :param tags: Set of tag strings from HTML.</span>
+<span class="sd">    :type tags: set[str]</span>
+<span class="sd">    :returns: Dictionary with parsed season, year, region, and test scores.</span>
+<span class="sd">    :rtype: dict[str, any]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">expanded</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;season&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">&quot;year&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">&quot;applicant_region&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="s2">&quot;gre_general&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">&quot;gre_verbal&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">&quot;gre_analytical_writing&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="s2">&quot;gpa&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="n">tag</span> <span class="ow">in</span> <span class="n">tags</span><span class="p">:</span>
+        <span class="n">tag</span> <span class="o">=</span> <span class="n">tag</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+        <span class="c1"># -------- Process region --------</span>
+
+        <span class="k">if</span> <span class="n">tag</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;international&quot;</span><span class="p">,</span> <span class="s2">&quot;american&quot;</span><span class="p">]:</span>
+            <span class="n">expanded</span><span class="p">[</span><span class="s2">&quot;applicant_region&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tag</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># -------- Process grades --------</span>
+
+        <span class="n">grade_match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(?P&lt;test&gt;gpa|gre(?:\s+v|\s+aw)?)\s+(?P&lt;score&gt;[\d\.]+)$&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">grade_match</span><span class="p">:</span>
+            <span class="n">test</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">grade_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;test&quot;</span><span class="p">)</span>
+            <span class="n">score</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">grade_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">test</span> <span class="o">==</span> <span class="s2">&quot;gpa&quot;</span><span class="p">:</span>
+                <span class="n">expanded</span><span class="p">[</span><span class="s2">&quot;gpa&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="n">test</span> <span class="o">==</span> <span class="s2">&quot;gre&quot;</span><span class="p">:</span>
+                <span class="n">expanded</span><span class="p">[</span><span class="s2">&quot;gre_general&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="n">test</span> <span class="o">==</span> <span class="s2">&quot;gre v&quot;</span><span class="p">:</span>
+                <span class="n">expanded</span><span class="p">[</span><span class="s2">&quot;gre_verbal&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="n">test</span> <span class="o">==</span> <span class="s2">&quot;gre aw&quot;</span><span class="p">:</span>
+                <span class="n">expanded</span><span class="p">[</span><span class="s2">&quot;gre_analytical_writing&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">score</span><span class="p">)</span>
+
+            <span class="k">continue</span>
+
+        <span class="c1"># -------- Process term --------</span>
+
+        <span class="n">term_match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(?P&lt;season&gt;[a-z]+)\s*?(?P&lt;year&gt;\d</span><span class="si">{4}</span><span class="s2">|\d</span><span class="si">{2}</span><span class="s2">)&quot;</span><span class="p">,</span> <span class="n">tag</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">term_match</span><span class="p">:</span>
+            <span class="n">season</span> <span class="o">=</span> <span class="n">term_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;season&quot;</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">season_category</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;fall&quot;</span><span class="p">,</span> <span class="s2">&quot;winter&quot;</span><span class="p">,</span> <span class="s2">&quot;spring&quot;</span><span class="p">,</span> <span class="s2">&quot;summer&quot;</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">season_category</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">season</span><span class="p">):</span>
+                    <span class="n">expanded</span><span class="p">[</span><span class="s2">&quot;season&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">season</span>
+                    <span class="k">break</span>
+
+            <span class="n">year</span> <span class="o">=</span> <span class="n">term_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;year&quot;</span><span class="p">)</span>
+
+            <span class="n">year</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;20&quot;</span> <span class="o">+</span> <span class="n">year</span><span class="p">)[</span><span class="o">-</span><span class="mi">4</span><span class="p">:]</span>
+            <span class="n">expanded</span><span class="p">[</span><span class="s2">&quot;year&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">year</span><span class="p">)</span>
+
+            <span class="k">continue</span>
+
+    <span class="k">return</span> <span class="n">expanded</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_decision_from_soup</span><span class="p">(</span><span class="n">decision_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">added_on_year</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parse decision string to extract status and date.</span>
+
+<span class="sd">    :param decision_str: Decision string in format &quot;status on DD MMM&quot;.</span>
+<span class="sd">    :type decision_str: str</span>
+<span class="sd">    :param added_on_year: Year for date inference.</span>
+<span class="sd">    :type added_on_year: int</span>
+<span class="sd">    :returns: Tuple of (status, date).</span>
+<span class="sd">    :rtype: tuple[str | None, datetime | None]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span>
+        <span class="sa">r</span><span class="s2">&quot;(?P&lt;status&gt;[A-Za-z\s]+?)\s+on\s+(?P&lt;date_str&gt;[0-9]+\s+[A-Za-z]+)$&quot;</span><span class="p">,</span>
+        <span class="n">decision_str</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">match</span><span class="p">:</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed to parse decision: </span><span class="si">{</span><span class="n">decision_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+    <span class="n">status</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+    <span class="n">date_part</span> <span class="o">=</span> <span class="n">match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;date_str&quot;</span><span class="p">)</span>
+
+    <span class="n">parsed_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">date_part</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">added_on_year</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">%d</span><span class="s2"> %b %Y&quot;</span><span class="p">)</span>
+
+    <span class="n">today</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+
+    <span class="c1"># Since decision dates only include month/day, we pick the most recent past year</span>
+    <span class="c1"># that makes sense relative to when the entry was added.</span>
+
+    <span class="k">if</span> <span class="n">parsed_date</span> <span class="o">&gt;</span> <span class="n">today</span><span class="p">:</span>
+        <span class="c1"># If it is, subtract one year</span>
+        <span class="n">year</span> <span class="o">=</span> <span class="n">today</span><span class="o">.</span><span class="n">year</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Otherwise, use the current year</span>
+        <span class="n">year</span> <span class="o">=</span> <span class="n">today</span><span class="o">.</span><span class="n">year</span>
+
+    <span class="n">date</span> <span class="o">=</span> <span class="n">parsed_date</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">year</span><span class="o">=</span><span class="n">year</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">status</span><span class="p">,</span> <span class="n">date</span>
+
+
+<div class="viewcode-block" id="AdmissionResult">
+<a class="viewcode-back" href="../api.html#model.AdmissionResult">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AdmissionResult</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Admission result data model with application details and test scores.&quot;&quot;&quot;</span>
+
+    <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">school</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">program_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">degree_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">added_on</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">decision_status</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">decision_date</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">season</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">year</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">applicant_region</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">gre_general</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">gre_verbal</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">gre_analytical_writing</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">gpa</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">comments</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">full_info_url</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">llm_generated_program</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">llm_generated_university</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="AdmissionResult.count">
+<a class="viewcode-back" href="../api.html#model.AdmissionResult.count">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">count</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Count admission results in database.</span>
+<span class="sd">        </span>
+<span class="sd">        :returns: Total record count.</span>
+<span class="sd">        :rtype: int</span>
+<span class="sd">        :raises psycopg.Error: If query fails.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">postgres_manager</span><span class="o">.</span><span class="n">get_connection</span><span class="p">()</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cur</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="n">sql</span><span class="o">.</span><span class="n">SQL</span><span class="p">(</span><span class="s2">&quot;SELECT COUNT(*) FROM </span><span class="si">{}</span><span class="s2">;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">sql</span><span class="o">.</span><span class="n">Identifier</span><span class="p">(</span><span class="n">get_table</span><span class="p">())</span>
+            <span class="p">)</span>
+
+            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># type: ignore</span></div>
+
+
+
+<div class="viewcode-block" id="AdmissionResult.execute_raw">
+<a class="viewcode-back" href="../api.html#model.AdmissionResult.execute_raw">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute_raw</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="nb">list</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute raw SQL query.</span>
+<span class="sd">        </span>
+<span class="sd">        :param query: SQL query string.</span>
+<span class="sd">        :type query: str</span>
+<span class="sd">        :param params: Query parameters.</span>
+<span class="sd">        :type params: list</span>
+<span class="sd">        :returns: Query results as dictionaries.</span>
+<span class="sd">        :rtype: list[dict]</span>
+<span class="sd">        :raises psycopg.Error: If query fails.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">postgres_manager</span><span class="o">.</span><span class="n">get_connection</span><span class="p">()</span><span class="o">.</span><span class="n">cursor</span><span class="p">(</span><span class="n">row_factory</span><span class="o">=</span><span class="n">psycopg</span><span class="o">.</span><span class="n">rows</span><span class="o">.</span><span class="n">dict_row</span><span class="p">)</span> <span class="k">as</span> <span class="n">cur</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="AdmissionResult.get_latest_id">
+<a class="viewcode-back" href="../api.html#model.AdmissionResult.get_latest_id">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_latest_id</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get highest admission ID from database.</span>
+<span class="sd">        </span>
+<span class="sd">        :returns: Highest ID or None.</span>
+<span class="sd">        :rtype: int | None</span>
+<span class="sd">        :raises psycopg.Error: If query fails.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">postgres_manager</span><span class="o">.</span><span class="n">get_connection</span><span class="p">()</span><span class="o">.</span><span class="n">cursor</span><span class="p">()</span> <span class="k">as</span> <span class="n">cur</span><span class="p">:</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="n">sql</span><span class="o">.</span><span class="n">SQL</span><span class="p">(</span><span class="s2">&quot;SELECT MAX(p_id) FROM </span><span class="si">{}</span><span class="s2">;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">sql</span><span class="o">.</span><span class="n">Identifier</span><span class="p">(</span><span class="n">get_table</span><span class="p">()),</span>
+            <span class="p">)</span>
+
+            <span class="n">cur</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+            <span class="n">result</span> <span class="o">=</span> <span class="n">cur</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+
+            <span class="k">return</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">result</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="AdmissionResult.from_soup">
+<a class="viewcode-back" href="../api.html#model.AdmissionResult.from_soup">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_soup</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">table_row</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Tag</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s1">&#39;AdmissionResult&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create AdmissionResult from HTML table rows.</span>
+
+<span class="sd">        :param table_row: List of BeautifulSoup Tag objects.</span>
+<span class="sd">        :type table_row: list[Tag]</span>
+<span class="sd">        :returns: New instance with extracted data.</span>
+<span class="sd">        :rtype: AdmissionResult</span>
+<span class="sd">        :raises ValueError: If HTML elements missing or malformed.</span>
+<span class="sd">        :raises AttributeError: If HTML structure unexpected.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">table_columns</span> <span class="o">=</span> <span class="n">table_row</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">table_row</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">tags</span> <span class="o">=</span> <span class="n">table_row</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">table_row</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">comments_row</span> <span class="o">=</span> <span class="n">table_row</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">table_row</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="n">tags</span> <span class="o">=</span> <span class="n">_tags_from_soup</span><span class="p">(</span>
+            <span class="nb">set</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">tag</span><span class="p">:</span> <span class="n">tag</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">(),</span> <span class="n">tags</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="n">class_</span><span class="o">=</span><span class="s2">&quot;tw-inline-flex&quot;</span><span class="p">)))</span>
+            <span class="k">if</span> <span class="n">tags</span>
+            <span class="k">else</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]()</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Unpack table columns</span>
+        <span class="n">tds</span> <span class="o">=</span> <span class="n">table_columns</span><span class="o">.</span><span class="n">find_all</span><span class="p">(</span><span class="s2">&quot;td&quot;</span><span class="p">)</span>
+        <span class="n">school</span> <span class="o">=</span> <span class="n">tds</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tds</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">program</span> <span class="o">=</span> <span class="n">tds</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tds</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">added_on</span> <span class="o">=</span> <span class="n">tds</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tds</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+        <span class="n">decision</span> <span class="o">=</span> <span class="n">tds</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tds</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">3</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span>
+
+        <span class="n">added_on</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">added_on</span><span class="p">,</span> <span class="s2">&quot;%B </span><span class="si">%d</span><span class="s2">, %Y&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">added_on</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="c1"># Do the best we can finding which year to use as the date for the decision.</span>
+        <span class="n">decision_year</span> <span class="o">=</span> <span class="p">(</span><span class="n">added_on</span><span class="o">.</span><span class="n">year</span> <span class="k">if</span> <span class="n">added_on</span> <span class="k">else</span> <span class="n">tags</span><span class="p">[</span><span class="s2">&quot;year&quot;</span><span class="p">])</span> <span class="ow">or</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span><span class="o">.</span><span class="n">year</span>
+
+        <span class="n">decision_status</span><span class="p">,</span> <span class="n">decision_date</span> <span class="o">=</span> <span class="n">_decision_from_soup</span><span class="p">(</span><span class="n">decision</span><span class="p">,</span> <span class="n">decision_year</span><span class="p">)</span>
+
+        <span class="n">comments</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">comments_row</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">if</span> <span class="n">comments_row</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+
+        <span class="c1"># Program and degree type are separated by an SVG element, which manifests as a set of</span>
+        <span class="c1"># newlines when BS extracts the text from it.</span>
+        <span class="n">program_name</span><span class="p">,</span> <span class="n">degree_type</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\n{2,}&quot;</span><span class="p">,</span> <span class="n">program</span><span class="p">)</span> <span class="o">+</span> <span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">degree_type</span> <span class="o">=</span> <span class="n">degree_type</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+        <span class="c1"># Each entry should have a link to the full info page -- we grab that and use it to</span>
+        <span class="c1"># find the entry&#39;s true ID value, which resides in the URL for it.</span>
+        <span class="n">full_info_anchor_element</span> <span class="o">=</span> <span class="n">table_columns</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="n">href</span><span class="o">=</span><span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;^/result&quot;</span><span class="p">))</span>
+        <span class="n">full_info_url</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">full_info_anchor_element</span><span class="p">[</span><span class="s2">&quot;href&quot;</span><span class="p">])</span>
+
+        <span class="c1"># Here, hrefs should always be in the form `/result/{id}`</span>
+        <span class="n">id_match</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;.+\/(?P&lt;id&gt;\d+)$&quot;</span><span class="p">,</span> <span class="n">full_info_url</span><span class="p">)</span>
+
+        <span class="nb">id</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">id_match</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">AdmissionResult</span><span class="p">(</span>
+            <span class="nb">id</span><span class="o">=</span><span class="nb">id</span><span class="p">,</span>
+            <span class="n">school</span><span class="o">=</span><span class="n">school</span><span class="p">,</span>
+            <span class="n">program_name</span><span class="o">=</span><span class="n">program_name</span><span class="p">,</span>
+            <span class="n">degree_type</span><span class="o">=</span><span class="n">degree_type</span><span class="p">,</span>
+            <span class="n">added_on</span><span class="o">=</span><span class="n">added_on</span><span class="p">,</span>
+            <span class="n">decision_status</span><span class="o">=</span><span class="n">decision_status</span><span class="p">,</span>
+            <span class="n">decision_date</span><span class="o">=</span><span class="n">decision_date</span><span class="p">,</span>
+            <span class="n">season</span><span class="o">=</span><span class="n">tags</span><span class="p">[</span><span class="s2">&quot;season&quot;</span><span class="p">],</span>
+            <span class="n">year</span><span class="o">=</span><span class="n">tags</span><span class="p">[</span><span class="s2">&quot;year&quot;</span><span class="p">],</span>
+            <span class="n">applicant_region</span><span class="o">=</span><span class="n">tags</span><span class="p">[</span><span class="s2">&quot;applicant_region&quot;</span><span class="p">],</span>
+            <span class="n">gre_general</span><span class="o">=</span><span class="n">tags</span><span class="p">[</span><span class="s2">&quot;gre_general&quot;</span><span class="p">],</span>
+            <span class="n">gre_verbal</span><span class="o">=</span><span class="n">tags</span><span class="p">[</span><span class="s2">&quot;gre_verbal&quot;</span><span class="p">],</span>
+            <span class="n">gre_analytical_writing</span><span class="o">=</span><span class="n">tags</span><span class="p">[</span><span class="s2">&quot;gre_analytical_writing&quot;</span><span class="p">],</span>
+            <span class="n">gpa</span><span class="o">=</span><span class="n">tags</span><span class="p">[</span><span class="s2">&quot;gpa&quot;</span><span class="p">],</span>
+            <span class="n">comments</span><span class="o">=</span><span class="n">comments</span><span class="p">,</span>
+            <span class="n">full_info_url</span><span class="o">=</span><span class="n">full_info_url</span><span class="p">,</span>
+            <span class="n">llm_generated_program</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">llm_generated_university</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AdmissionResult.from_dict">
+<a class="viewcode-back" href="../api.html#model.AdmissionResult.from_dict">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_dict</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">plain</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s1">&#39;AdmissionResult&#39;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create AdmissionResult from dictionary.</span>
+
+<span class="sd">        :param plain: Dictionary with admission data.</span>
+<span class="sd">        :type plain: dict</span>
+<span class="sd">        :returns: New instance with converted datetime fields.</span>
+<span class="sd">        :rtype: AdmissionResult</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">added_on</span> <span class="o">=</span> <span class="n">plain</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;added_on&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">added_on</span><span class="p">:</span>
+            <span class="n">added_on</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">added_on</span><span class="p">)</span>
+
+        <span class="n">decision_date</span> <span class="o">=</span> <span class="n">plain</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;decision_date&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">or</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">decision_date</span><span class="p">:</span>
+            <span class="n">decision_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromisoformat</span><span class="p">(</span><span class="n">decision_date</span><span class="p">)</span>
+
+        <span class="n">values</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">plain</span><span class="p">)</span>
+        <span class="n">values</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="n">added_on</span><span class="o">=</span><span class="n">added_on</span><span class="p">,</span>
+            <span class="n">decision_date</span><span class="o">=</span><span class="n">decision_date</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">AdmissionResult</span><span class="p">(</span><span class="o">**</span><span class="n">values</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="AdmissionResult.save_to_db">
+<a class="viewcode-back" href="../api.html#model.AdmissionResult.save_to_db">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_to_db</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cursor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Save admission result to database using UPSERT.</span>
+
+<span class="sd">        :param cursor: Database cursor.</span>
+<span class="sd">        :raises psycopg.Error: If database operation fails.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cursor</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">sql</span><span class="o">.</span><span class="n">SQL</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">            INSERT INTO </span><span class="si">{}</span><span class="s2"> (</span>
+<span class="s2">                p_id, school, program_name, program, comments, date_added, url,</span>
+<span class="s2">                status, decision_date, season, year, term, us_or_international,</span>
+<span class="s2">                gpa, gre, gre_v, gre_aw, degree,</span>
+<span class="s2">                llm_generated_program, llm_generated_university</span>
+<span class="s2">            )</span>
+<span class="s2">            VALUES (</span>
+<span class="s2">                </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">,</span>
+<span class="s2">                </span><span class="si">%s</span><span class="s2">,</span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span><span class="s2">, </span><span class="si">%s</span>
+<span class="s2">            )</span>
+<span class="s2">            ON CONFLICT (p_id) DO UPDATE SET</span>
+<span class="s2">                school = EXCLUDED.school,</span>
+<span class="s2">                program_name = EXCLUDED.program_name,</span>
+<span class="s2">                comments = EXCLUDED.comments,</span>
+<span class="s2">                date_added = EXCLUDED.date_added,</span>
+<span class="s2">                url = EXCLUDED.url,</span>
+<span class="s2">                status = EXCLUDED.status,</span>
+<span class="s2">                decision_date = EXCLUDED.decision_date,</span>
+<span class="s2">                season = EXCLUDED.season,</span>
+<span class="s2">                year = EXCLUDED.year,</span>
+<span class="s2">                term = EXCLUDED.term,</span>
+<span class="s2">                us_or_international = EXCLUDED.us_or_international,</span>
+<span class="s2">                gpa = EXCLUDED.gpa,</span>
+<span class="s2">                gre = EXCLUDED.gre,</span>
+<span class="s2">                gre_v = EXCLUDED.gre_v,</span>
+<span class="s2">                gre_aw = EXCLUDED.gre_aw,</span>
+<span class="s2">                degree = EXCLUDED.degree,</span>
+<span class="s2">                llm_generated_program = EXCLUDED.llm_generated_program,</span>
+<span class="s2">                llm_generated_university = EXCLUDED.llm_generated_university;</span>
+<span class="s2">        &quot;&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">sql</span><span class="o">.</span><span class="n">Identifier</span><span class="p">(</span><span class="n">get_table</span><span class="p">())</span>
+        <span class="p">),</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">school</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">program_name</span><span class="p">,</span>
+            <span class="c1"># Redundant but the assignment calls for it</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">school</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">program_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">comments</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">added_on</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">full_info_url</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">decision_status</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">decision_date</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">season</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">year</span><span class="p">,</span>
+            <span class="c1"># Redundant but the assignment calls for it</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">season</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">year</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">applicant_region</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gpa</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gre_general</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gre_verbal</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gre_analytical_writing</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">degree_type</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">llm_generated_program</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">llm_generated_university</span><span class="p">,</span>
+        <span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="AdmissionResult.clean_and_augment">
+<a class="viewcode-back" href="../api.html#model.AdmissionResult.clean_and_augment">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clean_and_augment</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply LLM-based data cleaning.</span>
+
+<span class="sd">        :raises Exception: If LLM processing fails.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">program_and_school</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">program_name</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">school</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Running cleaner on entry </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">program_and_school</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="n">clean</span><span class="o">.</span><span class="n">call_llm</span><span class="p">(</span><span class="n">program_and_school</span><span class="p">)</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Got cleaned fields: </span><span class="si">{</span><span class="n">result</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">llm_generated_program</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;standardized_program&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">llm_generated_university</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="s2">&quot;standardized_university&quot;</span><span class="p">]</span></div>
+</div>
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

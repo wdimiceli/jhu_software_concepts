@@ -1,0 +1,817 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>API Reference &mdash; Grad Café Analytics 1.0.0 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=e59714d7" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=8d563738"></script>
+      <script src="_static/doctools.js?v=9bcbadda"></script>
+      <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Testing Guide" href="testing.html" />
+    <link rel="prev" title="Architecture" href="architecture.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            Grad Café Analytics
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="setup.html">Setup and Configuration</a></li>
+<li class="toctree-l1"><a class="reference internal" href="architecture.html">Architecture</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#key-modules">Key Modules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#module-scrape">scrape.py</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#scrape.scrape_page"><code class="docutils literal notranslate"><span class="pre">scrape_page()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#scrape.scrape_data"><code class="docutils literal notranslate"><span class="pre">scrape_data()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-clean">clean.py</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#clean.call_llm"><code class="docutils literal notranslate"><span class="pre">call_llm()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-load_data">load_data.py</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#load_data.load_admissions_results"><code class="docutils literal notranslate"><span class="pre">load_admissions_results()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-query_data">query_data.py</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#query_data.safe_format"><code class="docutils literal notranslate"><span class="pre">safe_format()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#query_data.answer_questions"><code class="docutils literal notranslate"><span class="pre">answer_questions()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-blueprints.grad_data.routes">Flask Routes</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#blueprints.grad_data.routes.begin_refresh"><code class="docutils literal notranslate"><span class="pre">begin_refresh()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#blueprints.grad_data.routes.analysis"><code class="docutils literal notranslate"><span class="pre">analysis()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#blueprints.portfolio.routes.home"><code class="docutils literal notranslate"><span class="pre">home()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#blueprints.portfolio.routes.contact"><code class="docutils literal notranslate"><span class="pre">contact()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#blueprints.portfolio.routes.projects"><code class="docutils literal notranslate"><span class="pre">projects()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#module-run">Supporting Modules</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#run.create_app"><code class="docutils literal notranslate"><span class="pre">create_app()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#run.start"><code class="docutils literal notranslate"><span class="pre">start()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#model.get_table"><code class="docutils literal notranslate"><span class="pre">get_table()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#model.init_tables"><code class="docutils literal notranslate"><span class="pre">init_tables()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#model.AdmissionResult"><code class="docutils literal notranslate"><span class="pre">AdmissionResult</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.id"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.id</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.school"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.school</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.program_name"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.program_name</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.degree_type"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.degree_type</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.added_on"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.added_on</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.decision_status"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.decision_status</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.decision_date"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.decision_date</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.season"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.season</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.year"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.year</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.applicant_region"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.applicant_region</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.gre_general"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.gre_general</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.gre_verbal"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.gre_verbal</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.gre_analytical_writing"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.gre_analytical_writing</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.gpa"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.gpa</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.comments"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.comments</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.full_info_url"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.full_info_url</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.llm_generated_program"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.llm_generated_program</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.llm_generated_university"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.llm_generated_university</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.count"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.count()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.execute_raw"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.execute_raw()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.get_latest_id"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.get_latest_id()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.from_soup"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.from_soup()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.from_dict"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.from_dict()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.save_to_db"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.save_to_db()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.clean_and_augment"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.clean_and_augment()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#model.AdmissionResult.__init__"><code class="docutils literal notranslate"><span class="pre">AdmissionResult.__init__()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#postgres_manager.parse_database_url"><code class="docutils literal notranslate"><span class="pre">parse_database_url()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#postgres_manager.get_connection_params"><code class="docutils literal notranslate"><span class="pre">get_connection_params()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#postgres_manager.check_postgres_installed"><code class="docutils literal notranslate"><span class="pre">check_postgres_installed()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#postgres_manager.init_db"><code class="docutils literal notranslate"><span class="pre">init_db()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#postgres_manager.stop_postgres"><code class="docutils literal notranslate"><span class="pre">stop_postgres()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#postgres_manager.setup_db"><code class="docutils literal notranslate"><span class="pre">setup_db()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#postgres_manager.get_connection"><code class="docutils literal notranslate"><span class="pre">get_connection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#postgres_manager.test_postgres_connection"><code class="docutils literal notranslate"><span class="pre">test_postgres_connection()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#postgres_manager.start_postgres"><code class="docutils literal notranslate"><span class="pre">start_postgres()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="#postgres_manager.check_and_configure_postgres"><code class="docutils literal notranslate"><span class="pre">check_and_configure_postgres()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="testing.html">Testing Guide</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">Grad Café Analytics</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">API Reference</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/api.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="api-reference">
+<h1>API Reference<a class="headerlink" href="#api-reference" title="Link to this heading"></a></h1>
+<section id="key-modules">
+<h2>Key Modules<a class="headerlink" href="#key-modules" title="Link to this heading"></a></h2>
+<section id="module-scrape">
+<span id="scrape-py"></span><h3>scrape.py<a class="headerlink" href="#module-scrape" title="Link to this heading"></a></h3>
+<p>Web scraper for TheGradCafe.com admissions data.</p>
+<p>Scrapes admission results with robots.txt compliance and HTML parsing.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="scrape.scrape_page">
+<span class="sig-prename descclassname"><span class="pre">scrape.</span></span><span class="sig-name descname"><span class="pre">scrape_page</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">page</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)"><span class="pre">tuple</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#model.AdmissionResult" title="model.AdmissionResult"><span class="pre">AdmissionResult</span></a><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)"><span class="pre">bool</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/scrape.html#scrape_page"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scrape.scrape_page" title="Link to this definition"></a></dt>
+<dd><p>Scrape admission results from single page.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>page</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Page number to scrape (must be &gt; 0).</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Tuple of (admission results, has_more_pages).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.13)">tuple</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a>[<a class="reference internal" href="#model.AdmissionResult" title="model.AdmissionResult">AdmissionResult</a>], <a class="reference external" href="https://docs.python.org/3/library/functions.html#bool" title="(in Python v3.13)">bool</a>]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#Exception" title="(in Python v3.13)"><strong>Exception</strong></a> – If robots.txt check or HTTP request fails.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AssertionError" title="(in Python v3.13)"><strong>AssertionError</strong></a> – If page number not positive.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="scrape.scrape_data">
+<span class="sig-prename descclassname"><span class="pre">scrape.</span></span><span class="sig-name descname"><span class="pre">scrape_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">page</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">limit</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stop_at_id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#model.AdmissionResult" title="model.AdmissionResult"><span class="pre">AdmissionResult</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/scrape.html#scrape_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#scrape.scrape_data" title="Link to this definition"></a></dt>
+<dd><p>Scrape admission results from multiple pages.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>page</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a>) – Starting page number.</p></li>
+<li><p><strong>limit</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> | </em><em>None</em>) – Maximum results to collect.</p></li>
+<li><p><strong>stop_at_id</strong> (<a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><em>int</em></a><em> | </em><em>None</em>) – Stop when this ID encountered.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of scraped admission results.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a>[<a class="reference internal" href="#model.AdmissionResult" title="model.AdmissionResult">AdmissionResult</a>]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#Exception" title="(in Python v3.13)"><strong>Exception</strong></a> – If page scraping fails.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-clean">
+<span id="clean-py"></span><h3>clean.py<a class="headerlink" href="#module-clean" title="Link to this heading"></a></h3>
+<p>Data cleaning and standardization using local LLM.</p>
+<p>Standardizes university and program names using TinyLlama model with fuzzy matching
+and pattern-based normalization.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="clean.call_llm">
+<span class="sig-prename descclassname"><span class="pre">clean.</span></span><span class="sig-name descname"><span class="pre">call_llm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">program_text</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Dict" title="(in Python v3.13)"><span class="pre">Dict</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/clean.html#call_llm"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#clean.call_llm" title="Link to this definition"></a></dt>
+<dd><p>Standardize program and university names using LLM.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>program_text</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Input text with program and university.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary with standardized_program and standardized_university keys.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Dict[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a>]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#Exception" title="(in Python v3.13)"><strong>Exception</strong></a> – If LLM processing fails.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-load_data">
+<span id="load-data-py"></span><h3>load_data.py<a class="headerlink" href="#module-load_data" title="Link to this heading"></a></h3>
+<p>Load admissions data from JSON files into PostgreSQL database.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="load_data.load_admissions_results">
+<span class="sig-prename descclassname"><span class="pre">load_data.</span></span><span class="sig-name descname"><span class="pre">load_admissions_results</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/load_data.html#load_admissions_results"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#load_data.load_admissions_results" title="Link to this definition"></a></dt>
+<dd><p>Load admissions data from JSON file into database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>filename</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Path to JSON file with admission result data.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#FileNotFoundError" title="(in Python v3.13)"><strong>FileNotFoundError</strong></a> – If JSON file doesn’t exist.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/json.html#json.JSONDecodeError" title="(in Python v3.13)"><strong>json.JSONDecodeError</strong></a> – If file contains invalid JSON.</p></li>
+<li><p><a class="reference external" href="https://www.psycopg.org/psycopg3/docs/api/errors.html#psycopg.Error" title="(in psycopg)"><strong>psycopg.Error</strong></a> – If database operations fail.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-query_data">
+<span id="query-data-py"></span><h3>query_data.py<a class="headerlink" href="#module-query_data" title="Link to this heading"></a></h3>
+<p>Predefined database queries for admissions data analysis.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="query_data.safe_format">
+<span class="sig-prename descclassname"><span class="pre">query_data.</span></span><span class="sig-name descname"><span class="pre">safe_format</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'{:.2f}'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></span><a class="reference internal" href="_modules/query_data.html#safe_format"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#query_data.safe_format" title="Link to this definition"></a></dt>
+<dd><p>Format value safely, returning ‘N/A’ for None.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>value</strong> – Value to format.</p></li>
+<li><p><strong>fmt</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – Format string.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Formatted string or ‘N/A’.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="query_data.answer_questions">
+<span class="sig-prename descclassname"><span class="pre">query_data.</span></span><span class="sig-name descname"><span class="pre">answer_questions</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/query_data.html#answer_questions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#query_data.answer_questions" title="Link to this definition"></a></dt>
+<dd><p>Execute predefined queries and return formatted results.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List of dictionaries with prompt, answer, and formatted fields.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)">dict</a>]</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://www.psycopg.org/psycopg3/docs/api/errors.html#psycopg.Error" title="(in psycopg)"><strong>psycopg.Error</strong></a> – If database query fails.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+<section id="module-blueprints.grad_data.routes">
+<span id="flask-routes"></span><h2>Flask Routes<a class="headerlink" href="#module-blueprints.grad_data.routes" title="Link to this heading"></a></h2>
+<p>Flask blueprint for graduate admissions data analysis routes.</p>
+<p>This blueprint provides web routes for displaying and analyzing graduate
+admissions data.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="blueprints.grad_data.routes.begin_refresh">
+<span class="sig-prename descclassname"><span class="pre">blueprints.grad_data.routes.</span></span><span class="sig-name descname"><span class="pre">begin_refresh</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/blueprints/grad_data/routes.html#begin_refresh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blueprints.grad_data.routes.begin_refresh" title="Link to this definition"></a></dt>
+<dd><p>Execute background data scraping and database updates.</p>
+<p>Updates global scrape_state to track progress.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blueprints.grad_data.routes.analysis">
+<span class="sig-prename descclassname"><span class="pre">blueprints.grad_data.routes.</span></span><span class="sig-name descname"><span class="pre">analysis</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/blueprints/grad_data/routes.html#analysis"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blueprints.grad_data.routes.analysis" title="Link to this definition"></a></dt>
+<dd><p>Render admissions data analysis dashboard.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Rendered HTML template or HTTP error response.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-blueprints.portfolio.routes">Flask blueprint for portfolio website routes.</p>
+<p>Static page routes for portfolio sections: home, contact, and projects.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="blueprints.portfolio.routes.home">
+<span class="sig-prename descclassname"><span class="pre">blueprints.portfolio.routes.</span></span><span class="sig-name descname"><span class="pre">home</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/blueprints/portfolio/routes.html#home"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blueprints.portfolio.routes.home" title="Link to this definition"></a></dt>
+<dd><p>Render portfolio homepage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Rendered HTML template.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blueprints.portfolio.routes.contact">
+<span class="sig-prename descclassname"><span class="pre">blueprints.portfolio.routes.</span></span><span class="sig-name descname"><span class="pre">contact</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/blueprints/portfolio/routes.html#contact"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blueprints.portfolio.routes.contact" title="Link to this definition"></a></dt>
+<dd><p>Render contact page.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Rendered HTML template.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="blueprints.portfolio.routes.projects">
+<span class="sig-prename descclassname"><span class="pre">blueprints.portfolio.routes.</span></span><span class="sig-name descname"><span class="pre">projects</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/blueprints/portfolio/routes.html#projects"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#blueprints.portfolio.routes.projects" title="Link to this definition"></a></dt>
+<dd><p>Render projects page.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Rendered HTML template.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+<section id="module-run">
+<span id="supporting-modules"></span><h2>Supporting Modules<a class="headerlink" href="#module-run" title="Link to this heading"></a></h2>
+<p>Flask application factory and startup functions.</p>
+<p>Creates Flask app with portfolio and graduate data analysis blueprints.
+Handles PostgreSQL database initialization and JSON data loading.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="run.create_app">
+<span class="sig-prename descclassname"><span class="pre">run.</span></span><span class="sig-name descname"><span class="pre">create_app</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://flask.palletsprojects.com/en/stable/api/#flask.Flask" title="(in Flask v3.1.x)"><span class="pre">Flask</span></a></span></span><a class="reference internal" href="_modules/run.html#create_app"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#run.create_app" title="Link to this definition"></a></dt>
+<dd><p>Create Flask application with registered blueprints.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Configured Flask application instance.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>Flask</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="run.start">
+<span class="sig-prename descclassname"><span class="pre">run.</span></span><span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_filename</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/run.html#start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#run.start" title="Link to this definition"></a></dt>
+<dd><p>Start development server with database initialization.</p>
+<p>Starts PostgreSQL, loads data if specified, creates Flask app, and runs server.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data_filename</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> or </em><em>None</em>) – Path to JSON file with admissions data. Uses DATA_FILE env var if None.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<p id="module-model">Data models and database operations for admission results.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="model.get_table">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">get_table</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></span><a class="reference internal" href="_modules/model.html#get_table"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#model.get_table" title="Link to this definition"></a></dt>
+<dd><p>Get database table name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Table name from DB_TABLE env var or default.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="model.init_tables">
+<span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">init_tables</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/model.html#init_tables"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#model.init_tables" title="Link to this definition"></a></dt>
+<dd><p>Create admissions table if it doesn’t exist.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://www.psycopg.org/psycopg3/docs/api/errors.html#psycopg.Error" title="(in psycopg)"><strong>psycopg.Error</strong></a> – If table creation fails.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="model.AdmissionResult">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">model.</span></span><span class="sig-name descname"><span class="pre">AdmissionResult</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">school</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">program_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">degree_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">added_on</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.13)"><span class="pre">datetime</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">decision_status</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">decision_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.13)"><span class="pre">datetime</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">season</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">applicant_region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">gre_general</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">gre_verbal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">gre_analytical_writing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">gpa</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">comments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">full_info_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">llm_generated_program</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">llm_generated_university</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/model.html#AdmissionResult"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#model.AdmissionResult" title="Link to this definition"></a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/functions.html#object" title="(in Python v3.13)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Admission result data model with application details and test scores.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model.AdmissionResult.id">
+<span class="sig-name descname"><span class="pre">id</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></em><a class="headerlink" href="#model.AdmissionResult.id" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model.AdmissionResult.school">
+<span class="sig-name descname"><span class="pre">school</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></em><a class="headerlink" href="#model.AdmissionResult.school" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model.AdmissionResult.program_name">
+<span class="sig-name descname"><span class="pre">program_name</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></em><a class="headerlink" href="#model.AdmissionResult.program_name" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model.AdmissionResult.degree_type">
+<span class="sig-name descname"><span class="pre">degree_type</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></em><a class="headerlink" href="#model.AdmissionResult.degree_type" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model.AdmissionResult.added_on">
+<span class="sig-name descname"><span class="pre">added_on</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.13)"><span class="pre">datetime</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></em><a class="headerlink" href="#model.AdmissionResult.added_on" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model.AdmissionResult.decision_status">
+<span class="sig-name descname"><span class="pre">decision_status</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></em><a class="headerlink" href="#model.AdmissionResult.decision_status" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model.AdmissionResult.decision_date">
+<span class="sig-name descname"><span class="pre">decision_date</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.13)"><span class="pre">datetime</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></em><a class="headerlink" href="#model.AdmissionResult.decision_date" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model.AdmissionResult.season">
+<span class="sig-name descname"><span class="pre">season</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></em><a class="headerlink" href="#model.AdmissionResult.season" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model.AdmissionResult.year">
+<span class="sig-name descname"><span class="pre">year</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></em><a class="headerlink" href="#model.AdmissionResult.year" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model.AdmissionResult.applicant_region">
+<span class="sig-name descname"><span class="pre">applicant_region</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></em><a class="headerlink" href="#model.AdmissionResult.applicant_region" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model.AdmissionResult.gre_general">
+<span class="sig-name descname"><span class="pre">gre_general</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></em><a class="headerlink" href="#model.AdmissionResult.gre_general" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model.AdmissionResult.gre_verbal">
+<span class="sig-name descname"><span class="pre">gre_verbal</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></em><a class="headerlink" href="#model.AdmissionResult.gre_verbal" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model.AdmissionResult.gre_analytical_writing">
+<span class="sig-name descname"><span class="pre">gre_analytical_writing</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></em><a class="headerlink" href="#model.AdmissionResult.gre_analytical_writing" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model.AdmissionResult.gpa">
+<span class="sig-name descname"><span class="pre">gpa</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></em><a class="headerlink" href="#model.AdmissionResult.gpa" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model.AdmissionResult.comments">
+<span class="sig-name descname"><span class="pre">comments</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></em><a class="headerlink" href="#model.AdmissionResult.comments" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model.AdmissionResult.full_info_url">
+<span class="sig-name descname"><span class="pre">full_info_url</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></em><a class="headerlink" href="#model.AdmissionResult.full_info_url" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model.AdmissionResult.llm_generated_program">
+<span class="sig-name descname"><span class="pre">llm_generated_program</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></em><a class="headerlink" href="#model.AdmissionResult.llm_generated_program" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="model.AdmissionResult.llm_generated_university">
+<span class="sig-name descname"><span class="pre">llm_generated_university</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></em><a class="headerlink" href="#model.AdmissionResult.llm_generated_university" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="model.AdmissionResult.count">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">count</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></span><a class="reference internal" href="_modules/model.html#AdmissionResult.count"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#model.AdmissionResult.count" title="Link to this definition"></a></dt>
+<dd><p>Count admission results in database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Total record count.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)">int</a></p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://www.psycopg.org/psycopg3/docs/api/errors.html#psycopg.Error" title="(in psycopg)"><strong>psycopg.Error</strong></a> – If query fails.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="model.AdmissionResult.execute_raw">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">execute_raw</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">query</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><span class="pre">list</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference internal" href="_modules/model.html#AdmissionResult.execute_raw"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#model.AdmissionResult.execute_raw" title="Link to this definition"></a></dt>
+<dd><p>Execute raw SQL query.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>query</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – SQL query string.</p></li>
+<li><p><strong>params</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a>) – Query parameters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Query results as dictionaries.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)">list</a>[<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)">dict</a>]</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://www.psycopg.org/psycopg3/docs/api/errors.html#psycopg.Error" title="(in psycopg)"><strong>psycopg.Error</strong></a> – If query fails.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="model.AdmissionResult.get_latest_id">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">get_latest_id</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/model.html#AdmissionResult.get_latest_id"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#model.AdmissionResult.get_latest_id" title="Link to this definition"></a></dt>
+<dd><p>Get highest admission ID from database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Highest ID or None.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)">int</a> | None</p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://www.psycopg.org/psycopg3/docs/api/errors.html#psycopg.Error" title="(in psycopg)"><strong>psycopg.Error</strong></a> – If query fails.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="model.AdmissionResult.from_soup">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_soup</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">table_row</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><span class="pre">list</span></a><span class="p"><span class="pre">[</span></span><span class="pre">Tag</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#model.AdmissionResult" title="model.AdmissionResult"><span class="pre">AdmissionResult</span></a></span></span><a class="reference internal" href="_modules/model.html#AdmissionResult.from_soup"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#model.AdmissionResult.from_soup" title="Link to this definition"></a></dt>
+<dd><p>Create AdmissionResult from HTML table rows.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>table_row</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.13)"><em>list</em></a><em>[</em><em>Tag</em><em>]</em>) – List of BeautifulSoup Tag objects.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>New instance with extracted data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#model.AdmissionResult" title="model.AdmissionResult">AdmissionResult</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#ValueError" title="(in Python v3.13)"><strong>ValueError</strong></a> – If HTML elements missing or malformed.</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#AttributeError" title="(in Python v3.13)"><strong>AttributeError</strong></a> – If HTML structure unexpected.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="model.AdmissionResult.from_dict">
+<em class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">plain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#model.AdmissionResult" title="model.AdmissionResult"><span class="pre">AdmissionResult</span></a></span></span><a class="reference internal" href="_modules/model.html#AdmissionResult.from_dict"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#model.AdmissionResult.from_dict" title="Link to this definition"></a></dt>
+<dd><p>Create AdmissionResult from dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>plain</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><em>dict</em></a>) – Dictionary with admission data.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>New instance with converted datetime fields.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="#model.AdmissionResult" title="model.AdmissionResult">AdmissionResult</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="model.AdmissionResult.save_to_db">
+<span class="sig-name descname"><span class="pre">save_to_db</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cursor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/model.html#AdmissionResult.save_to_db"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#model.AdmissionResult.save_to_db" title="Link to this definition"></a></dt>
+<dd><p>Save admission result to database using UPSERT.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>cursor</strong> – Database cursor.</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://www.psycopg.org/psycopg3/docs/api/errors.html#psycopg.Error" title="(in psycopg)"><strong>psycopg.Error</strong></a> – If database operation fails.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="model.AdmissionResult.clean_and_augment">
+<span class="sig-name descname"><span class="pre">clean_and_augment</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/model.html#AdmissionResult.clean_and_augment"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#model.AdmissionResult.clean_and_augment" title="Link to this definition"></a></dt>
+<dd><p>Apply LLM-based data cleaning.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#Exception" title="(in Python v3.13)"><strong>Exception</strong></a> – If LLM processing fails.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="model.AdmissionResult.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">id</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">school</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">program_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">degree_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">added_on</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.13)"><span class="pre">datetime</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">decision_status</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">decision_date</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/datetime.html#datetime.datetime" title="(in Python v3.13)"><span class="pre">datetime</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">season</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">year</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">applicant_region</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">gre_general</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">gre_verbal</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.13)"><span class="pre">int</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">gre_analytical_writing</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">gpa</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.13)"><span class="pre">float</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">comments</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">full_info_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">llm_generated_program</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">llm_generated_university</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="headerlink" href="#model.AdmissionResult.__init__" title="Link to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<p id="module-postgres_manager">PostgreSQL database management functions.</p>
+<p>Manages PostgreSQL server lifecycle, database initialization, and connections.</p>
+<dl class="py function">
+<dt class="sig sig-object py" id="postgres_manager.parse_database_url">
+<span class="sig-prename descclassname"><span class="pre">postgres_manager.</span></span><span class="sig-name descname"><span class="pre">parse_database_url</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">database_url</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a></span></span><a class="reference internal" href="_modules/postgres_manager.html#parse_database_url"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#postgres_manager.parse_database_url" title="Link to this definition"></a></dt>
+<dd><p>Parse DATABASE_URL into connection components.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>database_url</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a>) – PostgreSQL connection URL in format postgresql://user:password&#64;host:port/database</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Dictionary with connection parameters</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="postgres_manager.get_connection_params">
+<span class="sig-prename descclassname"><span class="pre">postgres_manager.</span></span><span class="sig-name descname"><span class="pre">get_connection_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dbname</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><span class="pre">str</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)"><span class="pre">dict</span></a></span></span><a class="reference internal" href="_modules/postgres_manager.html#get_connection_params"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#postgres_manager.get_connection_params" title="Link to this definition"></a></dt>
+<dd><p>Build PostgreSQL connection parameters.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>dbname</strong> (<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.13)"><em>str</em></a><em> | </em><em>None</em>) – Database name (defaults to PG_DB)</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Connection parameters dictionary</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.13)">dict</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="postgres_manager.check_postgres_installed">
+<span class="sig-prename descclassname"><span class="pre">postgres_manager.</span></span><span class="sig-name descname"><span class="pre">check_postgres_installed</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/postgres_manager.html#check_postgres_installed"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#postgres_manager.check_postgres_installed" title="Link to this definition"></a></dt>
+<dd><p>Check if PostgreSQL binaries are installed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#SystemExit" title="(in Python v3.13)"><strong>SystemExit</strong></a> – If postgres or initdb binaries not found.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="postgres_manager.init_db">
+<span class="sig-prename descclassname"><span class="pre">postgres_manager.</span></span><span class="sig-name descname"><span class="pre">init_db</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/postgres_manager.html#init_db"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#postgres_manager.init_db" title="Link to this definition"></a></dt>
+<dd><p>Initialize PostgreSQL data directory if it doesn’t exist.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="postgres_manager.stop_postgres">
+<span class="sig-prename descclassname"><span class="pre">postgres_manager.</span></span><span class="sig-name descname"><span class="pre">stop_postgres</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">process</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference external" href="https://docs.python.org/3/library/subprocess.html#subprocess.Popen" title="(in Python v3.13)"><span class="pre">Popen</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/postgres_manager.html#stop_postgres"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#postgres_manager.stop_postgres" title="Link to this definition"></a></dt>
+<dd><p>Terminate PostgreSQL subprocess.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>process</strong> (<a class="reference external" href="https://docs.python.org/3/library/subprocess.html#subprocess.Popen" title="(in Python v3.13)"><em>subprocess.Popen</em></a>) – PostgreSQL process to terminate.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="postgres_manager.setup_db">
+<span class="sig-prename descclassname"><span class="pre">postgres_manager.</span></span><span class="sig-name descname"><span class="pre">setup_db</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.13)"><span class="pre">None</span></a></span></span><a class="reference internal" href="_modules/postgres_manager.html#setup_db"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#postgres_manager.setup_db" title="Link to this definition"></a></dt>
+<dd><p>Create project database if it doesn’t exist.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://www.psycopg.org/psycopg3/docs/api/errors.html#psycopg.Error" title="(in psycopg)"><strong>psycopg.Error</strong></a> – If database connection or creation fails.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="postgres_manager.get_connection">
+<span class="sig-prename descclassname"><span class="pre">postgres_manager.</span></span><span class="sig-name descname"><span class="pre">get_connection</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/postgres_manager.html#get_connection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#postgres_manager.get_connection" title="Link to this definition"></a></dt>
+<dd><p>Create database connection.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Connection to project database.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://www.psycopg.org/psycopg3/docs/api/connections.html#psycopg.Connection" title="(in psycopg)">psycopg.Connection</a></p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://www.psycopg.org/psycopg3/docs/api/errors.html#psycopg.Error" title="(in psycopg)"><strong>psycopg.Error</strong></a> – If connection fails.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="postgres_manager.test_postgres_connection">
+<span class="sig-prename descclassname"><span class="pre">postgres_manager.</span></span><span class="sig-name descname"><span class="pre">test_postgres_connection</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/postgres_manager.html#test_postgres_connection"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#postgres_manager.test_postgres_connection" title="Link to this definition"></a></dt>
+<dd><p>Test PostgreSQL server connectivity with retry logic.</p>
+<p>Attempts to establish a connection to the PostgreSQL server for up to 15 seconds
+with 1-second intervals between attempts. This function is typically used during
+startup to ensure the database server is ready before proceeding with application
+initialization.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#SystemExit" title="(in Python v3.13)"><strong>SystemExit</strong></a> – If PostgreSQL server is not accessible after 15 seconds</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="postgres_manager.start_postgres">
+<span class="sig-prename descclassname"><span class="pre">postgres_manager.</span></span><span class="sig-name descname"><span class="pre">start_postgres</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference external" href="https://docs.python.org/3/library/subprocess.html#subprocess.Popen" title="(in Python v3.13)"><span class="pre">Popen</span></a></span></span><a class="reference internal" href="_modules/postgres_manager.html#start_postgres"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#postgres_manager.start_postgres" title="Link to this definition"></a></dt>
+<dd><p>Start PostgreSQL server process.</p>
+<p>Initializes database, starts server, and creates project database.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>PostgreSQL server process.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3/library/subprocess.html#subprocess.Popen" title="(in Python v3.13)">subprocess.Popen</a></p>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3/library/exceptions.html#SystemExit" title="(in Python v3.13)"><strong>SystemExit</strong></a> – If PostgreSQL fails to start within 15 seconds.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="postgres_manager.check_and_configure_postgres">
+<span class="sig-prename descclassname"><span class="pre">postgres_manager.</span></span><span class="sig-name descname"><span class="pre">check_and_configure_postgres</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/postgres_manager.html#check_and_configure_postgres"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#postgres_manager.check_and_configure_postgres" title="Link to this definition"></a></dt>
+<dd><p>Check postgres connection and start local server if needed.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="architecture.html" class="btn btn-neutral float-left" title="Architecture" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="testing.html" class="btn btn-neutral float-right" title="Testing Guide" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright .</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
