@@ -61,6 +61,18 @@ PYTHONPATH=src pytest -m "web or buttons or analysis or db or integration" --cov
 
 ## Citations
 
+“Meyerweb.Com.” n.d. https://meyerweb.com/eric/tools/css/reset/.
+
+Acsany, Philipp. 2024. “Build a Scalable Flask Web Project From Scratch.” March 22, 2024. https://realpython.com/flask-project/.
+
+File:LinkedIn Icon.Svg - Wikimedia Commons. 2014. https://commons.wikimedia.org/wiki/File:LinkedIn_icon.svg.
+
+File:Github Logo Svg.Svg - Wikimedia Commons. 2023. https://commons.wikimedia.org/wiki/File:Github_logo_svg.svg.
+
+“Check If a Class Is a Dataclass in Python.” 2019. Stack Overflow. May 14, 2019. https://stackoverflow.com/questions/56106116/check-if-a-class-is-a-dataclass-in-python.
+
+“Issues Within Code Around Leap Year Using Datetime (Beginner Help).” 2020. Stack Overflow. May 14, 2020. https://stackoverflow.com/questions/61795172/issues-within-code-around-leap-year-using-datetime-beginner-help.
+
 Afif, Temani. n.d. "The Dots CSS Loaders Collection." https://css-loaders.com/dots/.
 
 "Category:Green Check Marks - Wikimedia Commons." n.d. https://commons.wikimedia.org/wiki/Category:Green_check_marks.
