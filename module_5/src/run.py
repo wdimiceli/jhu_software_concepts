@@ -19,15 +19,15 @@ def create_app() -> Flask:
     :rtype: Flask
     """
     app = Flask(__name__)
-    
+
     # Register the blueprint for the portfolio section.
     # This handles "/", "/contact", and "/projects".
     app.register_blueprint(portfolio)
-    
+
     # Register the blueprint for the graduate data analysis section.
     # This handles "/grad-data/analysis".
     app.register_blueprint(grad_data, url_prefix="/grad-data")
-    
+
     return app
 
 
@@ -47,5 +47,5 @@ def start(data_filename: str | None = None) -> None:
 
     # Create the main Flask application instance for production.
     root_app = create_app()
-    
+
     root_app.run(host='0.0.0.0', port=8080)
