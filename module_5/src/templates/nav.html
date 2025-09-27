@@ -1,0 +1,12 @@
+<nav-layout>
+  <nav>
+    {% for (url, name) in [
+      (url_for('portfolio.home'), 'Home'),
+      (url_for('portfolio.contact'), 'Contact'),
+      (url_for('portfolio.projects'), 'Projects'),
+      (url_for('grad_data.analysis'), 'Grad Data'),
+    ] %}
+      <a {{ 'data-active' if request.path == url else '' }} href="{{ url }}">{{ name }}</a>
+    {% endfor %}
+  </nav>
+</nav-layout>

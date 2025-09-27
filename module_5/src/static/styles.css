@@ -1,0 +1,340 @@
+/*
+ * Typefaces
+ * Roboto: https://fonts.google.com/specimen/Roboto
+ * Montserrat: https://fonts.google.com/specimen/Montserrat
+ */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
+/* -------------- Reset -------------- */
+
+/* http://meyerweb.com/eric/tools/css/reset/ 
+   v2.0 | 20110126
+   License: none (public domain)
+*/
+html, body, div, span, applet, object, iframe,
+h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+a, abbr, acronym, address, big, cite, code,
+del, dfn, em, img, ins, kbd, q, s, samp,
+small, strike, strong, sub, sup, tt, var,
+b, u, i, center,
+dl, dt, dd, ol, ul, li,
+fieldset, form, label, legend,
+table, caption, tbody, tfoot, thead, tr, th, td,
+article, aside, canvas, details, embed, 
+figure, figcaption, footer, header, hgroup, 
+menu, nav, output, ruby, section, summary,
+time, mark, audio, video {
+	margin: 0;
+	padding: 0;
+	border: 0;
+	font-size: 100%;
+	font: inherit;
+	vertical-align: baseline;
+}
+/* HTML5 display-role reset for older browsers */
+article, aside, details, figcaption, figure, 
+footer, header, hgroup, menu, nav, section {
+	display: block;
+}
+body {
+	line-height: 1;
+}
+ol, ul {
+	list-style: none;
+}
+blockquote, q {
+	quotes: none;
+}
+blockquote:before, blockquote:after,
+q:before, q:after {
+	content: '';
+	content: none;
+}
+table {
+	border-collapse: collapse;
+	border-spacing: 0;
+}
+
+/* -------------- END Reset -------------- */
+
+:root {
+  font-family: "Roboto", sans-serif;
+  font-optical-sizing: auto;
+  font-weight: 100;
+  font-style: normal;
+  font-variation-settings: "wdth" 100;
+
+  --color-primary: #f9f9f9;
+  --color-secondary: #d6444e;
+  --color-tertiary: #541218;
+}
+
+body {
+  background: #363030;
+  color: var(--color-primary);
+}
+
+section {
+  &:not(:last-child) {
+    margin-bottom: 32px;
+  }
+
+  &.two-column {
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    align-items: center;
+    max-width: fit-content;
+    
+    @media (min-width: 960px) {
+      flex-direction: row;
+    }
+
+    & p {
+      max-width: 500px;
+    }
+  }
+}
+
+:is(h1,h2,h3,h4,h5,h6) {
+  font-family: "Montserrat", sans-serif;
+  font-optical-sizing: auto;
+  font-size: 42px;
+  font-weight: 200;
+
+  white-space: nowrap;
+
+  margin-bottom: 6px;
+  
+  @media (min-width: 960px) {
+    font-size: 112px;
+  }
+
+  &:where(h2) {
+    font-size: 24px;
+    font-weight: 400;
+  }
+}
+
+.divider {
+  padding-bottom: 5px;
+  border-bottom: 3px solid rgb(from currentColor r g b / 0.5);
+  margin-bottom: 40px;
+}
+
+p {
+  font-size: 18px;
+  line-height: 1.25;
+
+  &:not(:last-child) {
+    margin-bottom: 12px;
+  }
+}
+
+small {
+  display: inline-block;
+  font-style: italic;
+  padding-left: 4vw;
+  opacity: 0.6;
+  vertical-align: middle;
+
+  @media (min-width: 960px) {
+    font-size: 20px
+  }
+}
+
+main {
+  padding: 24px 12vw;
+
+  @media (min-width: 960px) {
+    padding: 70px 12vw;
+    width: fit-content;
+  }
+}
+
+a {
+  color: #f8f8f8;
+  text-decoration: none;
+
+  &[data-active] {
+    color: var(--color-secondary);
+    font-weight: 600;
+  }
+
+  &:hover, &:focus {
+    text-decoration: underline;
+  }
+}
+
+nav-layout {
+  display: block;
+
+  @media (min-width: 960px) {
+    position: sticky;
+    top: 10px;
+  }
+  
+  & > nav {
+    background: #191919;
+    display: flex;
+    gap: 30px;
+    padding: 20px;
+    right: 0;
+    width: fit-content;
+    box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.2);
+    margin-left: auto;
+    border-bottom-left-radius: 10px;
+
+    /* Typography */
+    font-weight: 300;
+    font-size: 20px;
+
+    @media (min-width: 960px) {
+      position: absolute;
+      border-top-left-radius: 10px;
+    }
+  }
+}
+
+.bio-photo {
+  position: relative;
+  width: 400px;
+  aspect-ratio: 1;
+  max-width: 100%;
+  border-radius: 20px;
+  overflow: clip;
+  box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.2);
+  
+  & img {
+    position: absolute;
+    height: 100%;
+  }
+
+  & img:not(:first-child) {
+    transition: opacity 200ms ease-out;
+    opacity: 1;
+
+    &:hover {
+      opacity: 0;
+    }
+  }
+}
+
+.key-value {
+  display: grid;
+  /* grid: auto / auto; */
+  grid: auto / min-content auto;
+  gap: 16px;
+  align-items: center;
+  
+  & > * {
+    font-size: 18px;
+    
+    @media (min-width: 960px) {
+      font-size: 24px;
+    }
+  }
+
+  & > h2 {
+    font-weight: 700;
+    margin: 0;
+  }
+}
+
+.project-links {
+  border-left: 4px solid currentColor;
+  padding: 0 20px;
+  margin: 30px 0;
+
+  & a {
+    text-decoration: underline;
+    font-weight: 500;
+  }
+}
+
+.question-listing {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.question-entry {
+  border-radius: 10px;
+  background: rgba(0 0 0 / 0.5);
+  min-height: 64px;
+  padding: 14px;
+
+  & :is(h1,h2,h3,h4,h5,h6) {
+    font-size: 16px;
+    white-space: initial;
+    margin-bottom: 12px;
+  }
+
+  & i {
+    font-style: italic;
+  }
+
+  & strong {
+    font-weight: bold;
+  }
+}
+
+.controls {
+  display: flex;
+
+  gap: 16px;
+  flex-direction: column;
+  align-items: end;
+}
+
+button {
+  background: var(--color-tertiary);
+  border: 1px solid #ffffff22;
+  border-radius: 6px;
+  box-sizing: content-box;
+  color: #f8f8f8;
+  cursor: pointer;
+
+  display: inline-block;
+  
+  padding: 12px 30px;
+  width: 120px;
+  
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  text-align: center;
+  text-decoration: none;
+
+  white-space: nowrap;
+
+  &:hover, &:focus {
+    text-decoration: underline;
+  }
+
+  &[disabled] {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+}
+
+.control {
+  display: flex;
+  align-items: center;
+
+  & button {
+    margin-left: 12px;
+  }
+}
+
+/* https://css-loaders.com/dots / */
+.loader {
+  width: 60px;
+  aspect-ratio: 4;
+  background: radial-gradient(circle closest-side,#FFF 90%,#FFF0) 0/calc(100%/3) 100% space;
+  clip-path: inset(0 100% 0 0);
+  animation: l1 1s steps(4) infinite;
+}
+
+@keyframes l1 {to{clip-path: inset(0 -34% 0 0)}}
